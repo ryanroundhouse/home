@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Ryan Graham — Projects</title>
+    <meta name="description" content="Projects by Ryan Graham — featured builds with neon hover glow." />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./script.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="./index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Projects</div>
+        <h1 class="glow">Featured</h1>
+        <p class="subtle" style="margin-top: 0">
+          Three highlights — click a card to open in the same tab.
+        </p>
+
+        <div class="cards" aria-label="Featured projects">
+          <a class="card" href="https://moodful.ca">
+            <h3 class="glow">Moodful.ca</h3>
+            <p class="blurb">A mood tracking app designed for daily clarity and gentle habit loops.</p>
+            <div class="tags" aria-label="Tags">
+              <span class="tag cool">JS</span>
+              <span class="tag hot">Product</span>
+              <span class="tag">UX</span>
+              <span class="tag">Wellness</span>
+            </div>
+          </a>
+
+          <a class="card" href="https://github.com/USERNAME/REPO1">
+            <h3 class="glow">GitHub Repo 1</h3>
+            <p class="blurb">Placeholder blurb — a clean, sharp thing that does one job absurdly well.</p>
+            <div class="tags" aria-label="Tags">
+              <span class="tag">JS</span>
+              <span class="tag cool">AI</span>
+              <span class="tag">Tools</span>
+              <span class="tag hot">Shipping</span>
+            </div>
+          </a>
+
+          <a class="card" href="https://github.com/USERNAME/REPO2">
+            <h3 class="glow">GitHub Repo 2</h3>
+            <p class="blurb">Placeholder blurb — retro vibes, modern engineering, and a tiny spark of chaos.</p>
+            <div class="tags" aria-label="Tags">
+              <span class="tag cool">Games</span>
+              <span class="tag">Web</span>
+              <span class="tag">Perf</span>
+              <span class="tag hot">Neon</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="footer">
+          Tip: open the terminal and run <span class="glow">projects</span>.
+        </div>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="projects, open contact, matrix…"
+            />
+          </div>
+          <div class="help">
+            Use <span class="glow">open &lt;page&gt;</span> to navigate.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

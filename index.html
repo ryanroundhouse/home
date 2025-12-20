@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Ryan Graham — Home</title>
+    <meta name="description" content="Ryan Graham — personal site. Retro retrowave + arcade aesthetic. Dark-only." />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./script.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- Parallax background layer -->
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="./index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap">
+      <section class="hero" aria-label="Hero">
+        <div class="panel">
+          <div class="kicker">Welcome</div>
+          <h1 class="glow">Ryan Graham</h1>
+          <p class="tagline">Making things with care—software, stories, and systems.</p>
+          <p class="cta">Retro thoughts. Practical builds. Neon edges.</p>
+
+          <div class="btn-row" aria-label="Call to action">
+            <a class="btn primary" href="./projects.html">Projects</a>
+            <button class="btn ghost" type="button" data-open-terminal>
+              Open Terminal
+            </button>
+          </div>
+
+          <div class="footer" style="margin-top: 18px">
+            Tip: open the terminal and type <span class="glow">help</span>.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Terminal button (all pages) -->
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <!-- Terminal Modal / Panel -->
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="help, whoami, projects, open about…"
+            />
+          </div>
+          <div class="help">
+            Static site — no network calls. Use <span class="glow">open &lt;page&gt;</span> to navigate.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

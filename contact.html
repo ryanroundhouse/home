@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Ryan Graham — Contact</title>
+    <meta name="description" content="Contact Ryan Graham — local-only contact form and email placeholder." />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./script.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="./index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Contact</div>
+        <h1 class="glow">Say hi</h1>
+
+        <p class="subtle" style="margin-top: 0">
+          Email: <a href="mailto:ryan@example.com" class="glow">ryan@example.com</a>
+        </p>
+
+        <p class="help" style="margin-top: 0">
+          This is a static site (no backend yet). Submitting the form will show a “message queued” toast and copy your
+          message to clipboard as a handy fallback. Wire it to a real endpoint later.
+        </p>
+
+        <form id="contactForm" class="form" novalidate>
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" required />
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" required></textarea>
+          </div>
+
+          <div class="btn-row" aria-label="Form actions" style="margin-top: 6px">
+            <button class="btn primary" type="submit">Queue Message</button>
+            <button class="btn ghost" type="button" data-open-terminal>Open Terminal</button>
+          </div>
+
+          <p class="help" style="margin: 0">
+            Keyboard tips: use <span class="glow">Tab</span> to navigate, and open the terminal with the floating button.
+          </p>
+        </form>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="help, open links, theme…"
+            />
+          </div>
+          <div class="help">
+            Try: <span class="glow">whoami</span>, <span class="glow">projects</span>, <span class="glow">open about</span>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
