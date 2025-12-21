@@ -16,6 +16,7 @@
   - `styles.css`, `script.js`, `terminal.js`
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)
+  - `.cursor/commands/` (Cursor custom slash commands)
   - `package.json` (Node test scripts; ESM)
 - **`lib/`**: shared ESM modules (pure functions; used by browser + Node tests)
 - **`src/`**: Node/test-only JS modules (pure functions)
@@ -37,6 +38,9 @@
 ## Current file tree (top-level)
 ```
 .
+├── .cursor/
+│   └── commands/
+│       └── track.md
 ├── .cursorrules
 ├── .nvmrc
 ├── AGENTS.md

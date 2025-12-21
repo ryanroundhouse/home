@@ -11,6 +11,7 @@
 - **2025-12-21**: Converted site scripts to **ES modules** (`type="module"`) and added shared `lib/` utilities imported by browser code + Node tests.
 - **2025-12-21**: Extracted terminal path helpers (`normalizePath`, `resolvePath`) into `lib/terminalPaths.js` with tests.
 - **2025-12-21**: Clarified docs: module-based site should be previewed via `npm run dev` (file:// may not work).
+- **2025-12-21**: Added Cursor slash command `/track` (`.cursor/commands/track.md`) to update `CHANGELOG.md`, `DECISIONS.md`, and `STATE.md` based on the current `git diff`.
 
 ## Handoff requirements
 - Add a bullet for each agent session with **date + what changed + why**.
