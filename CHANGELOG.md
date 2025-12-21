@@ -1,7 +1,7 @@
 ## Agent change log
 
 ### Unreleased
-- **2025-12-21**: Added simulated multi-host SSH to the in-browser terminal: `ssh <user>@<host>` prompts for password and switches filesystem/prompt; `exit` returns to the prior arcade directory. Includes test host `moodful.ca` (root/wow).
+- **2025-12-21**: Added simulated multi-host SSH to the in-browser terminal: `ssh <user>@<host>` prompts for password and switches filesystem/prompt; `exit` returns to the prior arcade directory. Includes test host `moodful.ca` (root/wow) and Node tests.
 - **2025-12-21**: Added a simulated old-school `mail` command with per-`user@host` inboxes, persistent read/unread/hidden flags in localStorage, a consolidated mail catalog (`lib/terminalMailData.js`), and mission-style unlocking via `unlockKey` (unhide by key).
 - **2025-12-21**: Extracted filesystem data and operations from `terminal.js` into `lib/terminalFilesystem.js` for better modularity. Moved `filesystemData`, `getNode()`, and `getDirectoryContents()` into the new module.
 - **2025-12-21**: Added agent docs (`AGENTS.md`, `STATE.md`, `DECISIONS.md`) and change log template.

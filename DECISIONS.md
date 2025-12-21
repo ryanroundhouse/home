@@ -37,6 +37,19 @@
   - New messages can be shipped by updating the catalog without breaking existing user state.
   - “Mission unlocks” are deterministic and don’t require any backend/network calls.
 
+### ADR-0004 — Simulated multi-host terminal sessions (ssh/exit) with local auth
+- **Status**: Accepted
+- **Date**: 2025-12-21
+- **Context**: We want an `ssh user@host` command in the in-browser terminal without any network calls, so users can “connect” to a fake remote box and have the filesystem + prompt reflect that host.
+- **Decision**:
+  - Model hosts as separate embedded filesystems and add an **active host** switch (`setActiveHost()` / `getActiveHost()`) so existing `cd/ls/cat/pwd` operate on the current host.
+  - Implement `ssh` as an interactive two-step flow (command → password prompt) with **local-only auth** (no network) and a fixed test host `moodful.ca` (root/wow).
+  - Implement `exit` to close the ssh session by restoring the prior arcade host + working directory.
+  - Persist minimal session state in localStorage (`host`, `user`, `homeDir`, `cwd`) so refreshes behave predictably.
+- **Consequences**:
+  - The terminal gains “remote” sessions without backend dependencies.
+  - Host switching is centralized at the filesystem layer, keeping command implementations small.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.
