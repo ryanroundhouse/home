@@ -6,9 +6,12 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#07060f" />
     <title>Ryan Graham — Contact</title>
-    <meta name="description" content="Contact Ryan Graham — local-only contact form and email placeholder." />
+    <meta name="description" content="Contact Ryan Graham." />
+    <meta name="contact-endpoint" content="https://moodful.ca/api/contact" />
+    <meta name="recaptcha-site-key" content="6LemNFYqAAAAAOLKr63x6MWvHsrL9oJWUTkllXdW" />
     <link rel="stylesheet" href="./styles.css" />
     <script defer src="./script.js"></script>
+    <script defer src="https://www.google.com/recaptcha/api.js?render=6LemNFYqAAAAAOLKr63x6MWvHsrL9oJWUTkllXdW"></script>
   </head>
   <body class="crt">
     <a class="skip-link" href="#main">Skip to content</a>
@@ -60,8 +63,8 @@
         <h1 class="glow">Say hi</h1>
 
         <p class="help" style="margin-top: 0">
-          This is a static site (no backend yet). Submitting the form will show a “message queued” toast and copy your
-          message to clipboard as a handy fallback. Wire it to a real endpoint later.
+          This contact form submits via the Moodful API. If submission fails, it will copy your message to the clipboard
+          as a fallback.
         </p>
 
         <form id="contactForm" class="form" novalidate>
@@ -76,12 +79,17 @@
           </div>
 
           <div class="field">
+            <label for="subject">Subject</label>
+            <input id="subject" name="subject" type="text" autocomplete="off" required />
+          </div>
+
+          <div class="field">
             <label for="message">Message</label>
             <textarea id="message" name="message" required></textarea>
           </div>
 
           <div class="btn-row" aria-label="Form actions" style="margin-top: 6px">
-            <button class="btn primary" type="submit">Queue Message</button>
+            <button class="btn primary" type="submit">Send Message</button>
           </div>
 
           <p class="help" style="margin: 0">

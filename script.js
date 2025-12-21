@@ -155,7 +155,7 @@
   })();
 
   /* -----------------------------
-   * Contact form (local-only)
+   * Contact form (Moodful API + clipboard fallback)
    * ---------------------------*/
   const initContactForm = () => {
     const form = $('#contactForm');
@@ -166,6 +166,7 @@
       const fd = new FormData(form);
       const name = String(fd.get('name') || '').trim();
       const email = String(fd.get('email') || '').trim();
+      const subject = String(fd.get('subject') || '').trim();
       const message = String(fd.get('message') || '').trim();
 
       const payload =
@@ -173,28 +174,67 @@
 -----------------------------------------
 Name: ${name}
 Email: ${email}
+Subject: ${subject}
 Message:
 ${message}
 `;
 
-      // Try clipboard copy as a practical static-site fallback.
-      let copied = false;
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(payload);
-          copied = true;
+      const meta = (name) => document.querySelector(`meta[name="${name}"]`)?.getAttribute('content') || '';
+      const endpoint = meta('contact-endpoint') || 'https://moodful.ca/api/contact';
+      const siteKey = meta('recaptcha-site-key') || '';
+
+      const copyFallback = async () => {
+        let copied = false;
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(payload);
+            copied = true;
+          }
+        } catch {
+          copied = false;
         }
-      } catch {
-        copied = false;
+        toast(
+          copied
+            ? 'Could not send — copied message to clipboard.'
+            : 'Could not send — clipboard blocked. Please copy your message manually.'
+        );
+      };
+
+      const getRecaptchaToken = async () => {
+        if (!siteKey) throw new Error('Missing reCAPTCHA site key');
+        const grecaptcha = window.grecaptcha;
+        if (!grecaptcha?.ready || !grecaptcha?.execute) throw new Error('reCAPTCHA not loaded');
+        return await new Promise((resolve, reject) => {
+          grecaptcha.ready(() => {
+            grecaptcha.execute(siteKey, { action: 'submit' }).then(resolve).catch(reject);
+          });
+        });
+      };
+
+      try {
+        const token = await getRecaptchaToken();
+
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            subject,
+            message,
+            recaptchaToken: token,
+          }),
+        });
+
+        // Match mood-api behavior: non-2xx -> surface an error toast + fallback copy.
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        toast('Message sent successfully.');
+        form.reset();
+      } catch (err) {
+        console.error('Contact form submit failed:', err);
+        await copyFallback();
       }
-
-      toast(copied
-        ? 'Message queued (copied to clipboard).'
-        : 'Message queued. Clipboard blocked — copy manually from your form.'
-      );
-
-      // Keep the text in the form for manual copy when clipboard is blocked.
-      // Ryan can wire this to a backend later.
     });
   };
 
