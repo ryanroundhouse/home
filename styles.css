@@ -843,7 +843,19 @@ textarea{ min-height: 140px; resize: vertical; }
 @media (max-width: 768px){
   .nav{ display:none; }
   .hamburger{ display:inline-flex; align-items:center; }
-  .mobile-nav{ display:block; }
+  /* Mobile menu should overlay content (not push layout down) */
+  .site-header .wrap{ position: relative; }
+  .mobile-nav{
+    display:block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 80;
+  }
+  .mobile-nav .sheet{
+    margin-top: 0;
+  }
 
   .hero{
     padding: 32px 0 26px;
