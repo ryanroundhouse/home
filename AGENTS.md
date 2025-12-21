@@ -20,6 +20,7 @@ This repo is a **vanilla HTML/CSS/JS** personal site. These notes are for future
 - Update **`STATE.md`** + **`CHANGELOG.md`** at the end of your work.
 
 ## Commands
+- **Run local server**: `npm run dev` (serves `http://127.0.0.1:3000`)
 - **Run tests**: `npm test`
 - **Watch tests**: `npm run test:watch`
 

@@ -1,10 +1,11 @@
 ## Project snapshot
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
-- **Testing**: Node **18+** using `node:test` (no extra packages)
+- **Testing**: Node **22+** using `node:test` (no extra packages)
 
 ## How to run
-- **Open the site**: open `index.html` in a browser (file:// is supported)
+- **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
+- **Open the site (may not work)**: opening `index.html` directly via `file://` can break ES module loading in some browsers.
 - **Run tests**:
   - `npm test`
   - `npm run test:watch`
@@ -33,6 +34,7 @@
 ```
 .
 ├── .cursorrules
+├── .nvmrc
 ├── AGENTS.md
 ├── CHANGELOG.md
 ├── DECISIONS.md
@@ -40,7 +42,8 @@
 ├── package.json
 ├── lib/
 │   ├── slugify.js
-│   └── terminalFormat.js
+│   ├── terminalFormat.js
+│   └── terminalPaths.js
 ├── index.html
 ├── about.html
 ├── projects.html
@@ -55,7 +58,8 @@
 │       └── lib/
 └── tests/
     ├── slugify.test.js
-    └── terminalFormat.test.js
+    ├── terminalFormat.test.js
+    └── terminalPaths.test.js
 ```
 
 ## Handoff requirements

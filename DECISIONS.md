@@ -5,7 +5,7 @@
 - **Date**: 2025-12-21
 - **Context**: We want JS tests without adding heavy tooling or runtime dependencies.
 - **Decision**:
-  - Use **Node 18+ built-ins**: `node:test` + `node:assert/strict`
+  - Use **Node 22+ built-ins**: `node:test` + `node:assert/strict`
   - Use **ES modules** for test-only code (`package.json` has `"type": "module"`)
   - Keep browser code dependency-free and runnable by opening `index.html`
 - **Consequences**:

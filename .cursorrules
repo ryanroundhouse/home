@@ -17,7 +17,7 @@ Engineering constraints:
 
 Testing requirements:
 - If you change JS logic (especially anything under `src/`), add/update tests under `tests/`.
-- Run tests with `npm test` (Node 18+ `node:test`) and ensure they pass.
+- Run tests with `npm test` (Node 22+ `node:test`) and ensure they pass.
 
 End-of-session requirements:
 - Update `STATE.md` (structure + how to run).

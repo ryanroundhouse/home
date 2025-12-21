@@ -7,6 +7,7 @@
 */
 
 import { formatDate, formatFileSize } from './lib/terminalFormat.js';
+import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 
 (() => {
   'use strict';
@@ -432,40 +433,6 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
 
   const filesystem = filesystemData['/'];
 
-  const resolvePath = (path) => {
-    if (!path) return currentDir;
-    
-    // Handle ~ expansion
-    if (path.startsWith('~')) {
-      path = path.replace('~', homeDir);
-    }
-    
-    // Handle absolute paths
-    if (path.startsWith('/')) {
-      return normalizePath(path);
-    }
-    
-    // Handle relative paths
-    return normalizePath(currentDir + '/' + path);
-  };
-
-  const normalizePath = (path) => {
-    const parts = path.split('/').filter(p => p !== '' && p !== '.');
-    const result = [];
-    
-    for (const part of parts) {
-      if (part === '..') {
-        if (result.length > 0) {
-          result.pop();
-        }
-      } else {
-        result.push(part);
-      }
-    }
-    
-    return '/' + result.join('/');
-  };
-
   const getNode = (path) => {
     if (!filesystem) return null;
     
@@ -753,7 +720,7 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
     const cmdCd = (arg) => {
       // If no argument, go to home directory
       const targetPath = arg ? arg : '~';
-      const resolved = resolvePath(targetPath);
+      const resolved = resolvePath(targetPath, { currentDir, homeDir });
       const node = getNode(resolved);
       
       if (!node) {
@@ -772,7 +739,7 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
     };
 
     const cmdLs = (arg) => {
-      const targetPath = arg ? resolvePath(arg) : currentDir;
+      const targetPath = arg ? resolvePath(arg, { currentDir, homeDir }) : currentDir;
       const contents = getDirectoryContents(targetPath);
       
       if (contents === null) {
@@ -809,7 +776,7 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
         return;
       }
       
-      const resolved = resolvePath(arg);
+      const resolved = resolvePath(arg, { currentDir, homeDir });
       const node = getNode(resolved);
       
       if (!node) {
