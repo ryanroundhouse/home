@@ -24,6 +24,19 @@
   - Browser files can use `import`/`export` without a bundler.
   - Shared utilities have one implementation and one set of tests.
 
+### ADR-0003 — Terminal mail is catalog-driven + persisted + unlockable
+- **Status**: Accepted
+- **Date**: 2025-12-21
+- **Context**: We want a retro `mail` command in the in-browser terminal with per-`user@host` inboxes, persistent state, and the ability to reveal (unhide) messages as “missions” are completed.
+- **Decision**:
+  - Store seed mail in a single consolidated catalog file: `lib/terminalMailData.js` (shape: `{ host: { user: [messages] } }`).
+  - Persist mailbox state in localStorage under a versioned key (`rg_terminal_mail_v1`) keyed by mailbox id (`user@host`).
+  - Merge catalog into persisted state by **appending missing messages by `id`** (never overwrite existing read/hidden flags).
+  - Default `hidden` to **true** when omitted; missions reveal mail by calling `unlockMailByKey(storage, key)` matching per-message `unlockKey`.
+- **Consequences**:
+  - New messages can be shipped by updating the catalog without breaking existing user state.
+  - “Mission unlocks” are deterministic and don’t require any backend/network calls.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

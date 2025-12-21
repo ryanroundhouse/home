@@ -13,6 +13,9 @@ This repo is a **vanilla HTML/CSS/JS** personal site. These notes are for future
 - **Shared JS modules live under** `lib/` (used by both browser code and Node tests).
 - **Node/test-only code lives under** `src/` and `tests/`.
 - Prefer **small, pure functions** for testable logic.
+- Terminal subsystems should be split into small `lib/` modules where possible:
+  - **Mail catalog**: `lib/terminalMailData.js` (seed mail; `{ host: { user: [messages] } }`)
+  - **Mail logic**: `lib/terminalMail.js` (localStorage persistence + `unlockKey` support)
 
 ## Required workflow (agent)
 - Read **`AGENTS.md`**, **`STATE.md`**, and **`DECISIONS.md`** before editing.

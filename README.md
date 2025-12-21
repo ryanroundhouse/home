@@ -27,6 +27,14 @@ This repo includes a minimal JS test harness for **Node 22+** using `node:test`.
 - Browser scripts are loaded as **ES modules** (`type="module"`).
 - Shared, pure utilities live in `lib/` and are imported by browser code and Node tests.
 
+## In-browser terminal (simulated)
+The site includes a retro terminal UI (`terminal.js`) with a few simulated commands:
+
+- `ssh <user>@<host>` / `exit`: simulated multi-host SSH (no networking).
+- `mail` / `mail <n>`: per-`user@host` mailbox view + read, with persistent read/unread/hidden state.
+
+Mail seed data lives in `lib/terminalMailData.js` and is merged into localStorage on-demand (append-by-id). Some messages may be hidden until unlocked (mission-style) via `unlockKey`.
+
 ## Agent handoff
 If you’re an agent working in this repo:
 - Read `AGENTS.md`, `STATE.md`, `DECISIONS.md` before edits.

@@ -10,6 +10,7 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
 import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
+import { listInbox, readMessage, mailUsageLines } from './lib/terminalMail.js';
 
 (() => {
   'use strict';
@@ -318,6 +319,7 @@ import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminal
       line('  ls [dir]    - list directory contents', 'ok');
       line('  cat <file>  - display file contents', 'ok');
       line('  pwd         - print working directory', 'ok');
+      line('  mail        - check mailbox (simulated)', 'ok');
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
       line('  exit        - exit ssh session (back to arcade)', 'ok');
     };
@@ -406,6 +408,44 @@ import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminal
 
     const cmdPwd = () => {
       line(currentDir, 'ok');
+    };
+
+    const cmdMail = (arg) => {
+      const a = String(arg || '').trim();
+      if (!a) {
+        const outbox = listInbox(localStorage, { user: sessionUser, host: sessionHost });
+        const { unread, read, total } = outbox.counts;
+        line(`Mail for ${outbox.mailboxId}: ${total} messages (${unread} unread, ${read} read)`, 'ok');
+
+        if (outbox.rows.length === 0) {
+          line('No mail.', 'ok');
+          return;
+        }
+
+        line('Idx  F  Date        From              Subject', 'ok');
+        for (const r of outbox.rows) {
+          // Keep it retro and compact (not perfect alignment, but readable).
+          const idx = String(r.index).padStart(3, ' ');
+          const from = String(r.from).padEnd(17, ' ').slice(0, 17);
+          const subj = String(r.subject);
+          line(`${idx}  ${r.flag}  ${r.date}  ${from}  ${subj}`, 'ok');
+        }
+        return;
+      }
+
+      const lower = a.toLowerCase();
+      if (lower === 'help' || lower === '-h' || lower === '--help') {
+        for (const l of mailUsageLines()) line(l, 'ok');
+        return;
+      }
+
+      const n = Number(a);
+      const msg = readMessage(localStorage, { user: sessionUser, host: sessionHost, index: n });
+      if (!msg.ok) {
+        line(`mail: ${msg.error}`, 'err');
+        return;
+      }
+      for (const l of msg.lines) line(l, 'ok');
     };
 
     const printProjects = () => {
@@ -533,6 +573,9 @@ import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminal
           break;
         case 'pwd':
           cmdPwd();
+          break;
+        case 'mail':
+          cmdMail(arg);
           break;
         case 'ssh': {
           if (!arg) {
