@@ -6,6 +6,8 @@
   - Filesystem navigation (cd, ls, cat)
 */
 
+import { formatDate, formatFileSize } from './lib/terminalFormat.js';
+
 (() => {
   'use strict';
 
@@ -489,22 +491,6 @@
     }
     
     return Object.values(node.contents);
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[date.getMonth()];
-    const day = date.getDate();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${month} ${day} ${hours}:${minutes}`;
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes.toString();
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'K';
-    return (bytes / (1024 * 1024)).toFixed(1) + 'M';
   };
 
   /* -----------------------------

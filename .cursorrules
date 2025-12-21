@@ -1,0 +1,27 @@
+You are working in a vanilla HTML/CSS/JS personal site repo.
+
+Before making ANY edits:
+- Read `AGENTS.md`, `STATE.md`, and `DECISIONS.md`.
+
+Hard constraints:
+- No frontend frameworks (no React/Vue/Svelte/Angular).
+- No bundlers required; the site must work by opening `index.html` directly.
+- Do not add runtime JS dependencies for the website.
+- Do not add analytics.
+- Do not add new network calls.
+
+Engineering constraints:
+- Keep diffs minimal.
+- No large refactors unless explicitly requested.
+- Prefer small, pure functions (especially for testable logic in `src/`).
+
+Testing requirements:
+- If you change JS logic (especially anything under `src/`), add/update tests under `tests/`.
+- Run tests with `npm test` (Node 18+ `node:test`) and ensure they pass.
+
+End-of-session requirements:
+- Update `STATE.md` (structure + how to run).
+- Update `CHANGELOG.md` (date + what changed + why).
+- If you made a non-trivial decision (tooling/structure), add an entry to `DECISIONS.md`.
+
+
