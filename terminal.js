@@ -8,7 +8,8 @@
 
 import { formatDate, formatFileSize } from './lib/terminalFormat.js';
 import { normalizePath, resolvePath } from './lib/terminalPaths.js';
-import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
+import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
+import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 
 (() => {
   'use strict';
@@ -21,8 +22,17 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
   /* -----------------------------
    * Filesystem
    * ---------------------------*/
-  let currentDir = '/user/ryan';
-  const homeDir = '/user/ryan';
+  const ARCADE_HOST = 'arcade';
+  const ARCADE_USER = 'rg';
+  const ARCADE_HOME_DIR = '/user/ryan';
+
+  let currentDir = ARCADE_HOME_DIR;
+  let homeDir = ARCADE_HOME_DIR;
+  let sessionHost = ARCADE_HOST;
+  let sessionUser = ARCADE_USER;
+
+  let sshReturnFrame = null; // { host, user, dir, homeDir }
+  let pendingSsh = null; // { host, user }
 
 
   /* -----------------------------
@@ -58,6 +68,9 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
     const STORAGE_KEY_HISTORY = 'rg_terminal_history';
     const STORAGE_KEY_OUTPUT = 'rg_terminal_output';
     const STORAGE_KEY_DIR = 'rg_terminal_dir';
+    const STORAGE_KEY_HOST = 'rg_terminal_host';
+    const STORAGE_KEY_USER = 'rg_terminal_user';
+    const STORAGE_KEY_HOME = 'rg_terminal_home_dir';
     const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
 
     // Load from localStorage
@@ -69,9 +82,31 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
           historyIndex = history.length;
         }
         
+        const savedHost = localStorage.getItem(STORAGE_KEY_HOST);
+        if (savedHost && setActiveHost(savedHost)) {
+          sessionHost = savedHost;
+        } else {
+          sessionHost = ARCADE_HOST;
+          setActiveHost(ARCADE_HOST);
+        }
+
+        const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+        sessionUser = savedUser ? savedUser : (sessionHost === ARCADE_HOST ? ARCADE_USER : 'root');
+
+        const savedHome = localStorage.getItem(STORAGE_KEY_HOME);
+        homeDir = savedHome ? savedHome : (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : '/root');
+
         const savedDir = localStorage.getItem(STORAGE_KEY_DIR);
         if (savedDir) {
           currentDir = savedDir;
+        }
+
+        // Validate directories against the active host filesystem
+        if (!getNode(homeDir) || getNode(homeDir)?.type !== 'directory') {
+          homeDir = (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : '/root');
+        }
+        if (!getNode(currentDir) || getNode(currentDir)?.type !== 'directory') {
+          currentDir = homeDir;
         }
       } catch (e) {
         console.warn('Failed to load terminal state from localStorage:', e);
@@ -83,6 +118,9 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
       try {
         localStorage.setItem(STORAGE_KEY_OUTPUT, out.innerHTML);
         localStorage.setItem(STORAGE_KEY_DIR, currentDir);
+        localStorage.setItem(STORAGE_KEY_HOST, sessionHost);
+        localStorage.setItem(STORAGE_KEY_USER, sessionUser);
+        localStorage.setItem(STORAGE_KEY_HOME, homeDir);
       } catch (e) {
         console.warn('Failed to save terminal state to localStorage:', e);
       }
@@ -129,7 +167,7 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
       const prompt = $('.prompt', dialog);
       if (prompt) {
         const dir = currentDir === homeDir ? '~' : currentDir;
-        prompt.textContent = `rg@arcade:${dir}$`;
+        prompt.textContent = `${sessionUser}@${sessionHost}:${dir}$`;
       }
     };
 
@@ -280,6 +318,8 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
       line('  ls [dir]    - list directory contents', 'ok');
       line('  cat <file>  - display file contents', 'ok');
       line('  pwd         - print working directory', 'ok');
+      line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
+      line('  exit        - exit ssh session (back to arcade)', 'ok');
     };
 
     const cmdCd = (arg) => {
@@ -382,7 +422,53 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
       line(`ERR: "${cmd}" not found in this timeline. Try "help".`, 'err');
     };
 
+    const endPendingSsh = () => {
+      pendingSsh = null;
+      input.type = 'text';
+    };
+
+    const beginPendingSsh = ({ user, host }) => {
+      pendingSsh = { user, host };
+      input.type = 'password';
+      input.value = '';
+    };
+
+    const handleSshPassword = (rawPassword) => {
+      const password = String(rawPassword ?? '').trim();
+      const { user, host } = pendingSsh || {};
+      endPendingSsh();
+
+      const auth = checkSshPassword({ host, user, password });
+      if (!auth.ok) {
+        line('Permission denied, please try again.', 'err');
+        return;
+      }
+
+      // Save return frame so `exit` can restore arcade session
+      sshReturnFrame = {
+        host: sessionHost,
+        user: sessionUser,
+        dir: currentDir,
+        homeDir,
+      };
+
+      setActiveHost(auth.host);
+      sessionHost = auth.host;
+      sessionUser = auth.user;
+      homeDir = auth.homeDir;
+      currentDir = homeDir;
+
+      updatePrompt();
+      saveToStorage();
+      line(`Connected to ${sessionHost}.`, 'ok');
+    };
+
     const run = (raw) => {
+      if (pendingSsh) {
+        handleSshPassword(raw);
+        return;
+      }
+
       const text = normalize(raw);
       if (!text) return;
 
@@ -397,6 +483,9 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
       try {
         localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
         localStorage.setItem(STORAGE_KEY_DIR, currentDir);
+        localStorage.setItem(STORAGE_KEY_HOST, sessionHost);
+        localStorage.setItem(STORAGE_KEY_USER, sessionUser);
+        localStorage.setItem(STORAGE_KEY_HOME, homeDir);
       } catch (e) {
         console.warn('Failed to save terminal history to localStorage:', e);
       }
@@ -445,6 +534,48 @@ import { getNode, getDirectoryContents } from './lib/terminalFilesystem.js';
         case 'pwd':
           cmdPwd();
           break;
+        case 'ssh': {
+          if (!arg) {
+            line('usage: ssh <user>@<host>', 'err');
+            break;
+          }
+          const parsed = parseSshTarget(arg);
+          if (!parsed) {
+            line('ssh: invalid target. usage: ssh <user>@<host>', 'err');
+            break;
+          }
+          const resolvedHost = resolveSshHost(parsed.host);
+          if (!resolvedHost) {
+            line(`ssh: Could not resolve hostname ${parsed.host}`, 'err');
+            break;
+          }
+          if (sessionHost !== ARCADE_HOST) {
+            line('ssh: already in an ssh session. Use "exit" first.', 'err');
+            break;
+          }
+          line(`${parsed.user}@${resolvedHost}'s password:`, 'ok');
+          beginPendingSsh({ user: parsed.user, host: resolvedHost });
+          break;
+        }
+        case 'exit': {
+          if (sessionHost === ARCADE_HOST || !sshReturnFrame) {
+            line('exit: not in an ssh session', 'err');
+            break;
+          }
+          const frame = sshReturnFrame;
+          sshReturnFrame = null;
+
+          setActiveHost(frame.host);
+          sessionHost = frame.host;
+          sessionUser = frame.user;
+          homeDir = frame.homeDir;
+          currentDir = frame.dir;
+
+          updatePrompt();
+          saveToStorage();
+          line('Connection closed.', 'ok');
+          break;
+        }
         default:
           unknown(cmd);
       }

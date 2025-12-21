@@ -44,8 +44,8 @@
 │   ├── slugify.js
 │   ├── terminalFormat.js
 │   ├── terminalPaths.js
-│   └── terminalFilesystem.js
-│   └── terminalFilesystem.js
+│   ├── terminalFilesystem.js
+│   └── terminalSsh.js
 ├── index.html
 ├── about.html
 ├── projects.html
@@ -60,8 +60,10 @@
 │       └── lib/
 └── tests/
     ├── slugify.test.js
+    ├── terminalFilesystemHosts.test.js
     ├── terminalFormat.test.js
     └── terminalPaths.test.js
+    └── terminalSsh.test.js
 ```
 
 ## Handoff requirements
