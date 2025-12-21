@@ -43,7 +43,9 @@
 ├── lib/
 │   ├── slugify.js
 │   ├── terminalFormat.js
-│   └── terminalPaths.js
+│   ├── terminalPaths.js
+│   └── terminalFilesystem.js
+│   └── terminalFilesystem.js
 ├── index.html
 ├── about.html
 ├── projects.html

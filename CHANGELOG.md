@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-21**: Extracted filesystem data and operations from `terminal.js` into `lib/terminalFilesystem.js` for better modularity. Moved `filesystemData`, `getNode()`, and `getDirectoryContents()` into the new module.
 - **2025-12-21**: Added agent docs (`AGENTS.md`, `STATE.md`, `DECISIONS.md`) and change log template.
 - **2025-12-21**: Added `.cursorrules` and a minimal Node test harness (`package.json`, `src/`, `tests/`) using `node:test` (no extra packages).
 - **2025-12-21**: Pinned Node to **22+** (`package.json` engines, `.nvmrc`, docs) and added a local preview script (`npm run dev` → `python3 -m http.server 3000`).
