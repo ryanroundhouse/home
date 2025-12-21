@@ -153,13 +153,73 @@
               "size": 4096,
               "modified": "2024-01-15T10:00:00Z",
               "contents": {
-                "ls": {
+                "help": {
                   "type": "file",
-                  "name": "ls",
+                  "name": "help",
                   "permissions": "-rwxr-xr-x",
                   "owner": "root",
                   "group": "root",
-                  "size": 133792,
+                  "size": 24576,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "whoami": {
+                  "type": "file",
+                  "name": "whoami",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 16384,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "projects": {
+                  "type": "file",
+                  "name": "projects",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 28672,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "open": {
+                  "type": "file",
+                  "name": "open",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 32768,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "theme": {
+                  "type": "file",
+                  "name": "theme",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 20480,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "clear": {
+                  "type": "file",
+                  "name": "clear",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 12288,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "matrix": {
+                  "type": "file",
+                  "name": "matrix",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 45056,
                   "modified": "2024-01-01T00:00:00Z",
                   "content": "Binary executable"
                 },
@@ -173,6 +233,16 @@
                   "modified": "2024-01-01T00:00:00Z",
                   "content": "Binary executable"
                 },
+                "ls": {
+                  "type": "file",
+                  "name": "ls",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 133792,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
                 "cat": {
                   "type": "file",
                   "name": "cat",
@@ -180,6 +250,16 @@
                   "owner": "root",
                   "group": "root",
                   "size": 35840,
+                  "modified": "2024-01-01T00:00:00Z",
+                  "content": "Binary executable"
+                },
+                "pwd": {
+                  "type": "file",
+                  "name": "pwd",
+                  "permissions": "-rwxr-xr-x",
+                  "owner": "root",
+                  "group": "root",
+                  "size": 14336,
                   "modified": "2024-01-01T00:00:00Z",
                   "content": "Binary executable"
                 },
@@ -456,6 +536,43 @@
     let matrixCanvas = null;
     let matrixResizeObserver = null;
 
+    // LocalStorage keys
+    const STORAGE_KEY_HISTORY = 'rg_terminal_history';
+    const STORAGE_KEY_OUTPUT = 'rg_terminal_output';
+    const STORAGE_KEY_DIR = 'rg_terminal_dir';
+    const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
+
+    // Load from localStorage
+    const loadFromStorage = () => {
+      try {
+        const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+        if (savedHistory) {
+          history = JSON.parse(savedHistory);
+          historyIndex = history.length;
+        }
+        
+        const savedDir = localStorage.getItem(STORAGE_KEY_DIR);
+        if (savedDir) {
+          currentDir = savedDir;
+        }
+      } catch (e) {
+        console.warn('Failed to load terminal state from localStorage:', e);
+      }
+    };
+
+    // Save to localStorage
+    const saveToStorage = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY_OUTPUT, out.innerHTML);
+        localStorage.setItem(STORAGE_KEY_DIR, currentDir);
+      } catch (e) {
+        console.warn('Failed to save terminal state to localStorage:', e);
+      }
+    };
+
+    // Load initial state
+    loadFromStorage();
+
     const scrollToBottom = () => {
       out.scrollTop = out.scrollHeight;
     };
@@ -466,6 +583,8 @@
       p.textContent = text;
       out.appendChild(p);
       scrollToBottom();
+      // Save output to localStorage after adding line
+      saveToStorage();
     };
 
     const lineHTML = (html, cls = 'ok') => {
@@ -474,10 +593,13 @@
       p.innerHTML = html;
       out.appendChild(p);
       scrollToBottom();
+      // Save output to localStorage after adding line
+      saveToStorage();
     };
 
     const clearOutput = () => {
       out.innerHTML = '';
+      saveToStorage();
     };
 
     const setChip = (text) => {
@@ -660,6 +782,7 @@
       
       currentDir = resolved;
       updatePrompt();
+      saveToStorage();
     };
 
     const cmdLs = (arg) => {
@@ -752,6 +875,13 @@
       history.push(text);
       history = history.slice(-50);
       historyIndex = history.length;
+      // Note: output is saved by line()/lineHTML() calls, but save history here
+      try {
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
+        localStorage.setItem(STORAGE_KEY_DIR, currentDir);
+      } catch (e) {
+        console.warn('Failed to save terminal history to localStorage:', e);
+      }
 
       const [head, ...rest] = text.split(/\s+/);
       const cmd = (head || '').toLowerCase();
@@ -834,15 +964,38 @@
       window.addEventListener('keydown', onKeydownGlobal, true);
       dialog.addEventListener('keydown', trapFocus);
 
-      // If this is the first open on the page, print greeting.
+      // Ensure directory is loaded and prompt is updated
+      loadFromStorage();
+      updatePrompt();
+
+      // Restore output from localStorage if available
       if (!out.dataset.booted) {
         out.dataset.booted = 'true';
-        line('Welcome to RG/OS v0.1', 'ok');
-        updatePrompt();
-        line('Filesystem loaded. Type "help" to list commands.', 'ok');
-        if (prefersReducedMotion) line('Motion reduced: parallax/matrix kept minimal.', 'ok');
-      } else {
-        updatePrompt();
+        try {
+          const savedOutput = localStorage.getItem(STORAGE_KEY_OUTPUT);
+          const hasSeenGreeting = localStorage.getItem(STORAGE_KEY_FIRST_BOOT) === 'true';
+          
+          if (savedOutput && savedOutput.trim() && hasSeenGreeting) {
+            // Restore previous session
+            out.innerHTML = savedOutput;
+            scrollToBottom();
+            // Update prompt again after restoring (in case directory changed)
+            updatePrompt();
+          } else {
+            // First time ever - show greeting
+            line('Welcome to RG/OS v0.1', 'ok');
+            updatePrompt();
+            line('Filesystem loaded. Type "help" to list commands.', 'ok');
+            if (prefersReducedMotion) line('Motion reduced: parallax/matrix kept minimal.', 'ok');
+            localStorage.setItem(STORAGE_KEY_FIRST_BOOT, 'true');
+          }
+        } catch (e) {
+          // Fallback to greeting if restore fails
+          line('Welcome to RG/OS v0.1', 'ok');
+          updatePrompt();
+          line('Filesystem loaded. Type "help" to list commands.', 'ok');
+          if (prefersReducedMotion) line('Motion reduced: parallax/matrix kept minimal.', 'ok');
+        }
       }
 
       // Focus input after render
