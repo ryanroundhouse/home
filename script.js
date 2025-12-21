@@ -263,8 +263,9 @@ ${message}
     let history = [];
     let historyIndex = -1;
     let matrixOn = false;
-    let matrixTimer = null;
-    let matrixEl = null;
+    let matrixAnimationId = null;
+    let matrixCanvas = null;
+    let matrixResizeObserver = null;
 
     const scrollToBottom = () => {
       out.scrollTop = out.scrollHeight;
@@ -314,11 +315,19 @@ ${message}
 
     const stopMatrix = () => {
       matrixOn = false;
-      clearInterval(matrixTimer);
-      matrixTimer = null;
-      if (matrixEl) {
-        matrixEl.remove();
-        matrixEl = null;
+      if (matrixAnimationId) {
+        cancelAnimationFrame(matrixAnimationId);
+        matrixAnimationId = null;
+      }
+      if (matrixResizeObserver) {
+        matrixResizeObserver.disconnect();
+        matrixResizeObserver = null;
+      }
+      if (matrixCanvas) {
+        const ctx = matrixCanvas.getContext('2d');
+        ctx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+        matrixCanvas.remove();
+        matrixCanvas = null;
       }
       setChip('type: help');
       line('matrix: disabled', 'ok');
@@ -331,46 +340,89 @@ ${message}
       }
       matrixOn = true;
       setChip('matrix: ON');
-      line('matrix: enabled (terminal-only)', 'ok');
-      matrixEl = document.createElement('pre');
-      matrixEl.className = 'matrix-pre';
-      matrixEl.setAttribute('aria-hidden', 'true');
-      out.appendChild(matrixEl);
-      scrollToBottom();
+      line('matrix: enabled (terminal background)', 'ok');
 
-      const cols = () => Math.max(18, Math.min(64, Math.floor((out.clientWidth - 24) / 10)));
-      const rows = () => 10;
-      const charset = 'abcdefghijklmnopqrstuvwxyz0123456789#$%&*+=-';
-      let drops = new Array(cols()).fill(0).map(() => Math.floor(Math.random() * rows()));
+      // Create canvas element
+      matrixCanvas = document.createElement('canvas');
+      matrixCanvas.id = 'matrixCanvas';
+      matrixCanvas.setAttribute('aria-hidden', 'true');
+      matrixCanvas.style.position = 'absolute';
+      matrixCanvas.style.inset = '0';
+      matrixCanvas.style.pointerEvents = 'none';
+      matrixCanvas.style.zIndex = '0';
+      dialog.appendChild(matrixCanvas);
 
-      const tick = () => {
-        if (!matrixEl) return;
-        const c = cols();
-        if (drops.length !== c) drops = new Array(c).fill(0).map(() => Math.floor(Math.random() * rows()));
+      const ctx = matrixCanvas.getContext('2d');
+      
+      // Set canvas size to match dialog
+      const resizeCanvas = () => {
+        if (!matrixCanvas) return;
+        matrixCanvas.width = dialog.offsetWidth;
+        matrixCanvas.height = dialog.offsetHeight;
+      };
+      resizeCanvas();
 
-        const r = rows();
-        let output = '';
-        for (let y = 0; y < r; y++) {
-          let row = '';
-          for (let x = 0; x < c; x++) {
-            const d = drops[x];
-            if (d === y) {
-              row += charset[Math.floor(Math.random() * charset.length)];
-            } else {
-              row += (Math.random() < 0.06) ? charset[Math.floor(Math.random() * charset.length)] : ' ';
-            }
-          }
-          output += row + '\n';
+      // Handle resize
+      matrixResizeObserver = new ResizeObserver(() => {
+        if (matrixCanvas && matrixOn) {
+          resizeCanvas();
         }
-        matrixEl.textContent = output;
+      });
+      matrixResizeObserver.observe(dialog);
+
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const fontSize = 14;
+      let columns = Math.floor(matrixCanvas.width / fontSize);
+      let drops = Array(columns).fill(1);
+      let frameCount = 0;
+
+      const draw = () => {
+        if (!matrixCanvas || !matrixOn) return;
+
+        frameCount++;
+        // Slow down by 80%: only draw every 5th frame (20% speed)
+        if (frameCount % 5 !== 0) {
+          if (matrixOn) {
+            matrixAnimationId = requestAnimationFrame(draw);
+          }
+          return;
+        }
+
+        // Update columns if canvas size changed
+        const newColumns = Math.floor(matrixCanvas.width / fontSize);
+        if (newColumns !== columns) {
+          columns = newColumns;
+          drops = Array(columns).fill(1);
+        }
+
+        // Semi-transparent black to create fade effect
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.05)';
+        ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+
+        ctx.fillStyle = '#00ff41';
+        ctx.font = `${fontSize}px "Courier New", monospace`;
 
         for (let i = 0; i < drops.length; i++) {
-          drops[i] = (drops[i] + 1 + (Math.random() < 0.18 ? 1 : 0)) % r;
+          const char = chars[Math.floor(Math.random() * chars.length)];
+          const x = i * fontSize;
+          const y = drops[i] * fontSize;
+
+          ctx.fillText(char, x, y);
+
+          // Reset drop randomly or when it reaches bottom
+          if (y > matrixCanvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+
+          drops[i]++;
+        }
+
+        if (matrixOn) {
+          matrixAnimationId = requestAnimationFrame(draw);
         }
       };
 
-      // Lightweight interval (kept low for mobile safety).
-      matrixTimer = window.setInterval(tick, 110);
+      draw();
     };
 
     const toggleMatrix = () => {
