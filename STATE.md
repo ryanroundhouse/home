@@ -30,6 +30,10 @@
 ## Current decisions (summary)
 - Node tests use **`node:test`** + **ESM** (`"type": "module"`). See `DECISIONS.md`.
 
+## In-browser terminal (current capabilities)
+- **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to prior session (simulated; no networking).
+- **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
+
 ## Current file tree (top-level)
 ```
 .
@@ -45,7 +49,9 @@
 │   ├── terminalFormat.js
 │   ├── terminalPaths.js
 │   ├── terminalFilesystem.js
-│   └── terminalSsh.js
+│   ├── terminalSsh.js
+│   ├── terminalMail.js
+│   └── terminalMailData.js
 ├── index.html
 ├── about.html
 ├── projects.html
@@ -60,9 +66,10 @@
 │       └── lib/
 └── tests/
     ├── slugify.test.js
+    ├── terminalMail.test.js
     ├── terminalFilesystemHosts.test.js
     ├── terminalFormat.test.js
-    └── terminalPaths.test.js
+    ├── terminalPaths.test.js
     └── terminalSsh.test.js
 ```
 
