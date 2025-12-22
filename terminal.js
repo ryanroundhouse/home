@@ -64,6 +64,8 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
     let matrixAnimationId = null;
     let matrixCanvas = null;
     let matrixResizeObserver = null;
+    let rebootInProgress = false;
+    let rebootIntervalId = null;
 
     // LocalStorage keys
     const STORAGE_KEY_HISTORY = 'rg_terminal_history';
@@ -323,6 +325,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       line('  mail        - check mailbox (simulated)', 'ok');
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
       line('  exit        - exit ssh session (back to arcade)', 'ok');
+      line('  reboot      - reboot current host (simulated)', 'ok');
     };
 
     const cmdCd = (arg) => {
@@ -518,7 +521,85 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       line(`Connected to ${sessionHost}.`, 'ok');
     };
 
+    const cmdReboot = () => {
+      if (rebootInProgress) {
+        line('reboot: already in progress', 'err');
+        return;
+      }
+
+      // Protect against accidental "stuck disabled input" if anything throws.
+      const enableInput = () => {
+        input.disabled = false;
+        try { input.focus(); } catch {}
+      };
+      const disableInput = () => {
+        input.disabled = true;
+      };
+
+      // If a previous timer exists for any reason, clear it.
+      if (rebootIntervalId) {
+        clearInterval(rebootIntervalId);
+        rebootIntervalId = null;
+      }
+
+      rebootInProgress = true;
+      disableInput();
+
+      const rebootingHost = sessionHost;
+      line(`reboot: scheduling reboot for ${rebootingHost}`, 'ok');
+
+      let n = 3;
+      line(`reboot: ${n}...`, 'ok');
+      rebootIntervalId = window.setInterval(() => {
+        n--;
+        if (n > 0) {
+          line(`reboot: ${n}...`, 'ok');
+          return;
+        }
+
+        clearInterval(rebootIntervalId);
+        rebootIntervalId = null;
+
+        // Arcade reboot: close the terminal UI (simulated "power cycle").
+        if (sessionHost === ARCADE_HOST) {
+          line('reboot: now', 'ok');
+          rebootInProgress = false;
+          enableInput();
+          close();
+          return;
+        }
+
+        // Remote reboot: return to the session we came from (like `exit`).
+        if (!sshReturnFrame) {
+          line('reboot: lost return frame; cannot restore previous session', 'err');
+          rebootInProgress = false;
+          enableInput();
+          return;
+        }
+
+        const frame = sshReturnFrame;
+        sshReturnFrame = null;
+
+        setActiveHost(frame.host);
+        sessionHost = frame.host;
+        sessionUser = frame.user;
+        homeDir = frame.homeDir;
+        currentDir = frame.dir;
+
+        updatePrompt();
+        saveToStorage();
+        line(`Connection closed: ${rebootingHost} rebooted.`, 'ok');
+
+        rebootInProgress = false;
+        enableInput();
+      }, 750);
+    };
+
     const run = (raw) => {
+      if (rebootInProgress) {
+        line('system: rebooting (input locked)', 'err');
+        return;
+      }
       if (pendingSsh) {
         handleSshPassword(raw);
         return;
@@ -634,6 +715,9 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
           line('Connection closed.', 'ok');
           break;
         }
+        case 'reboot':
+          cmdReboot();
+          break;
         default:
           unknown(cmd);
       }
