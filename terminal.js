@@ -25,7 +25,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
    * ---------------------------*/
   const ARCADE_HOST = 'arcade';
   const ARCADE_USER = 'rg';
-  const ARCADE_HOME_DIR = '/user/ryan';
+  const ARCADE_HOME_DIR = '/home/rg';
 
   let currentDir = ARCADE_HOME_DIR;
   let homeDir = ARCADE_HOME_DIR;
@@ -66,6 +66,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
     let matrixResizeObserver = null;
     let rebootInProgress = false;
     let rebootIntervalId = null;
+    let pendingConfirm = null; // { kind: 'rmrf_root' }
 
     // LocalStorage keys
     const STORAGE_KEY_HISTORY = 'rg_terminal_history';
@@ -75,7 +76,10 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
     const STORAGE_KEY_USER = 'rg_terminal_user';
     const STORAGE_KEY_HOME = 'rg_terminal_home_dir';
     const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
-    const STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH = 'rg_terminal_moodful_root_first_ssh';
+    const STORAGE_KEY_QUESTS = 'rg_terminal_quests_v1';
+
+    const QUESTS_VERSION = 1;
+    const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
 
     // Load from localStorage
     const loadFromStorage = () => {
@@ -98,7 +102,9 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
         sessionUser = savedUser ? savedUser : (sessionHost === ARCADE_HOST ? ARCADE_USER : 'root');
 
         const savedHome = localStorage.getItem(STORAGE_KEY_HOME);
-        homeDir = savedHome ? savedHome : (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : '/root');
+        homeDir = savedHome
+          ? savedHome
+          : (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${sessionUser}`);
 
         const savedDir = localStorage.getItem(STORAGE_KEY_DIR);
         if (savedDir) {
@@ -107,7 +113,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
 
         // Validate directories against the active host filesystem
         if (!getNode(homeDir) || getNode(homeDir)?.type !== 'directory') {
-          homeDir = (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : '/root');
+          homeDir = (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${sessionUser}`);
         }
         if (!getNode(currentDir) || getNode(currentDir)?.type !== 'directory') {
           currentDir = homeDir;
@@ -128,6 +134,85 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       } catch (e) {
         console.warn('Failed to save terminal state to localStorage:', e);
       }
+    };
+
+    /* -----------------------------
+     * Quests
+     * ---------------------------*/
+    const defaultQuestState = () => ({
+      version: QUESTS_VERSION,
+      moodfulReboot: {
+        sshRootFirst: false,
+        rebootEmailRead: false,
+        moodfulRebooted: false,
+      },
+    });
+
+    const isObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+
+    const loadQuestState = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_QUESTS);
+        if (!raw) return defaultQuestState();
+        const parsed = JSON.parse(raw);
+        if (!isObject(parsed) || parsed.version !== QUESTS_VERSION) return defaultQuestState();
+        if (!isObject(parsed.moodfulReboot)) return defaultQuestState();
+
+        const s = defaultQuestState();
+        s.moodfulReboot.sshRootFirst = parsed.moodfulReboot.sshRootFirst === true;
+        s.moodfulReboot.rebootEmailRead = parsed.moodfulReboot.rebootEmailRead === true;
+        s.moodfulReboot.moodfulRebooted = parsed.moodfulReboot.moodfulRebooted === true;
+        return s;
+      } catch {
+        return defaultQuestState();
+      }
+    };
+
+    const saveQuestState = (state) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_QUESTS, JSON.stringify(state));
+      } catch (e) {
+        console.warn('Failed to save quest state:', e);
+      }
+    };
+
+    const renderTodoMd = () => {
+      const q = loadQuestState();
+      const m = q.moodfulReboot;
+      // Quest only appears after the reboot-request email is read.
+      // Once complete, it moves to DONE.md and no longer appears here.
+      const complete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
+      if (!m.rebootEmailRead || complete) {
+        return ['# TODO', '', 'No active quests.', ''].join('\n');
+      }
+
+      const box = (done) => (done ? '[x]' : '[ ]');
+      return [
+        '# TODO',
+        '',
+        '## Quest: Moodful — reboot request',
+        `- ${box(m.sshRootFirst)} First successful ssh: \`ssh root@moodful.ca\``,
+        `- ${box(m.rebootEmailRead)} Read the ops email requesting a reboot`,
+        `- ${box(m.moodfulRebooted)} Reboot moodful.ca (\`reboot\` while ssh’d in)`,
+        '',
+      ].join('\n');
+    };
+
+    const renderDoneMd = () => {
+      const q = loadQuestState();
+      const m = q.moodfulReboot;
+      const complete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
+      if (!complete) {
+        return ['# DONE', '', 'Nothing completed yet.', ''].join('\n');
+      }
+
+      return [
+        '# DONE',
+        '',
+        '## Quest: Moodful — reboot request',
+        '- Completed: Rebooted moodful.ca after ops request',
+        '',
+      ].join('\n');
     };
 
     // Load initial state
@@ -326,6 +411,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
       line('  exit        - exit ssh session (back to arcade)', 'ok');
       line('  reboot      - reboot current host (simulated)', 'ok');
+      line('  rm -rf /    - wipe all local state (DANGEROUS; asks to confirm)', 'ok');
     };
 
     const cmdCd = (arg) => {
@@ -388,6 +474,19 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       }
       
       const resolved = resolvePath(arg, { currentDir, homeDir });
+
+      // System-of-record for quests (dynamic view).
+      if (sessionHost === ARCADE_HOST && resolved === '/home/rg/TODO.md') {
+        const text = renderTodoMd();
+        for (const lineText of text.split('\n')) line(lineText, 'ok');
+        return;
+      }
+      if (sessionHost === ARCADE_HOST && resolved === '/home/rg/DONE.md') {
+        const text = renderDoneMd();
+        for (const lineText of text.split('\n')) line(lineText, 'ok');
+        return;
+      }
+
       const node = getNode(resolved);
       
       if (!node) {
@@ -450,6 +549,22 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
         return;
       }
       for (const l of msg.lines) line(l, 'ok');
+
+      // Quest hook: reading the reboot request email activates the quest in TODO.md.
+      try {
+        if (sessionHost === ARCADE_HOST && msg.id === MOODFUL_REBOOT_REQUEST_MAIL_ID) {
+          const q = loadQuestState();
+          if (!q.moodfulReboot.rebootEmailRead) {
+            q.moodfulReboot.rebootEmailRead = true;
+            // If the user got here, the ssh prerequisite almost certainly happened.
+            if (!q.moodfulReboot.sshRootFirst) q.moodfulReboot.sshRootFirst = true;
+            saveQuestState(q);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record quest mail-read event:', e);
+      }
     };
 
     const printProjects = () => {
@@ -477,6 +592,56 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       input.value = '';
     };
 
+    const beginPendingConfirm = (kind) => {
+      pendingConfirm = { kind };
+      input.type = 'text';
+      input.value = '';
+    };
+
+    const endPendingConfirm = () => {
+      pendingConfirm = null;
+      input.type = 'text';
+    };
+
+    const resetAdventureState = () => {
+      // Remove persisted state so the next open looks like a first boot.
+      // Keep this list explicit so we don't accidentally wipe unrelated keys.
+      const keys = [
+        // quests
+        STORAGE_KEY_QUESTS,
+        // mail
+        'rg_terminal_mail_v1',
+        // terminal session + boot state
+        STORAGE_KEY_HISTORY,
+        STORAGE_KEY_OUTPUT,
+        STORAGE_KEY_DIR,
+        STORAGE_KEY_HOST,
+        STORAGE_KEY_USER,
+        STORAGE_KEY_HOME,
+        STORAGE_KEY_FIRST_BOOT,
+      ];
+      for (const k of keys) {
+        try { localStorage.removeItem(k); } catch {}
+      }
+
+      // Reset in-memory session defaults.
+      try { setActiveHost(ARCADE_HOST); } catch {}
+      sessionHost = ARCADE_HOST;
+      sessionUser = ARCADE_USER;
+      homeDir = ARCADE_HOME_DIR;
+      currentDir = ARCADE_HOME_DIR;
+      sshReturnFrame = null;
+      pendingSsh = null;
+      endPendingConfirm();
+
+      history = [];
+      historyIndex = -1;
+
+      // Reset terminal output DOM so the next open shows the greeting.
+      out.innerHTML = '';
+      delete out.dataset.booted;
+    };
+
     const handleSshPassword = (rawPassword) => {
       const password = String(rawPassword ?? '').trim();
       const { user, host } = pendingSsh || {};
@@ -491,9 +656,10 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       // One-time unlock: first successful ssh as root to moodful.ca reveals an ops email on rg@arcade.
       try {
         if (auth.host === 'moodful.ca' && auth.user === 'root') {
-          const seen = localStorage.getItem(STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH) === 'true';
-          if (!seen) {
-            localStorage.setItem(STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH, 'true');
+          const q = loadQuestState();
+          if (!q.moodfulReboot.sshRootFirst) {
+            q.moodfulReboot.sshRootFirst = true;
+            saveQuestState(q);
             unlockMailByKey(localStorage, 'moodful_root_first_ssh');
           }
         }
@@ -560,6 +726,22 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
         clearInterval(rebootIntervalId);
         rebootIntervalId = null;
 
+        // Quest hook: first reboot on moodful.ca unlocks a thank-you email.
+        try {
+          if (rebootingHost === 'moodful.ca') {
+            const q = loadQuestState();
+            if (!q.moodfulReboot.moodfulRebooted) {
+              q.moodfulReboot.moodfulRebooted = true;
+              if (!q.moodfulReboot.sshRootFirst) q.moodfulReboot.sshRootFirst = true;
+              saveQuestState(q);
+              unlockMailByKey(localStorage, 'moodful_first_reboot');
+              line('quest: moodful reboot complete — mail unlocked', 'ok');
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to record quest reboot event:', e);
+        }
+
         // Arcade reboot: close the terminal UI (simulated "power cycle").
         if (sessionHost === ARCADE_HOST) {
           line('reboot: now', 'ok');
@@ -600,6 +782,21 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
         line('system: rebooting (input locked)', 'err');
         return;
       }
+      if (pendingConfirm) {
+        const answer = String(raw ?? '').trim().toLowerCase();
+        const kind = pendingConfirm.kind;
+        endPendingConfirm();
+        if (kind === 'rmrf_root') {
+          if (answer === 'yes' || answer === 'y') {
+            line('rm: OK. wiping local state...', 'ok');
+            resetAdventureState();
+            close();
+          } else {
+            line('rm: aborted (no changes made).', 'ok');
+          }
+        }
+        return;
+      }
       if (pendingSsh) {
         handleSshPassword(raw);
         return;
@@ -610,6 +807,14 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
 
       // echo the command
       line(`> ${text}`, 'cmd');
+
+      // Special-case: destructive reset (simulate exact command string).
+      if (text === 'rm -rf /') {
+        line('DANGER ZONE: this will wipe all local terminal state (quests, mail, history, output).', 'err');
+        line('Type "yes" to proceed, anything else to cancel:', 'err');
+        beginPendingConfirm('rmrf_root');
+        return;
+      }
 
       // Save history
       history.push(text);

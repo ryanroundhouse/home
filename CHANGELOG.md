@@ -4,6 +4,9 @@
 - **2025-12-21**: Added simulated multi-host SSH to the in-browser terminal: `ssh <user>@<host>` prompts for password and switches filesystem/prompt; `exit` returns to the prior arcade directory. Includes test host `moodful.ca` (root/wow) and Node tests.
 - **2025-12-21**: Added a one-time SSH milestone unlock: first successful `ssh root@moodful.ca` reveals a hidden `ops@moodful.ca` reboot request email in `rg@arcade`.
 - **2025-12-22**: Added a simulated `reboot` command: counts down then closes the terminal on `arcade`, or drops you back to the prior session when run on an ssh host.
+- **2025-12-22**: Linked Moodful actions into a quest: first `ssh root@moodful.ca` unlocks the reboot request email; reading it activates `/home/rg/TODO.md`; rebooting `moodful.ca` unlocks a thank-you email.
+- **2025-12-22**: When a quest completes, it moves from `/home/rg/TODO.md` to `/home/rg/DONE.md`.
+- **2025-12-22**: Added a simulated `rm -rf /` reset command (with confirmation) to wipe all local terminal state and restart the adventure from scratch.
 - **2025-12-21**: Added a simulated old-school `mail` command with per-`user@host` inboxes, persistent read/unread/hidden flags in localStorage, a consolidated mail catalog (`lib/terminalMailData.js`), and mission-style unlocking via `unlockKey` (unhide by key).
 - **2025-12-21**: Extracted filesystem data and operations from `terminal.js` into `lib/terminalFilesystem.js` for better modularity. Moved `filesystemData`, `getNode()`, and `getDirectoryContents()` into the new module.
 - **2025-12-21**: Added agent docs (`AGENTS.md`, `STATE.md`, `DECISIONS.md`) and change log template.

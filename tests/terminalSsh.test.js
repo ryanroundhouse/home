@@ -25,7 +25,7 @@ test('resolveSshHost: resolves only known simulated hosts', () => {
 test('checkSshPassword: authenticates moodful.ca root/wow', () => {
   assert.deepEqual(
     checkSshPassword({ host: 'moodful.ca', user: 'root', password: 'wow' }),
-    { ok: true, host: 'moodful.ca', user: 'root', homeDir: '/root' }
+    { ok: true, host: 'moodful.ca', user: 'root', homeDir: '/home/root' }
   );
 });
 

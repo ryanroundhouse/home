@@ -6,16 +6,23 @@ import { getNode, getActiveHost, setActiveHost } from '../lib/terminalFilesystem
 test('multi-host filesystem: can switch active host and resolve paths accordingly', () => {
   // start from whatever the module default is
   assert.equal(getActiveHost(), 'arcade');
-  assert.ok(getNode('/user/ryan'), 'arcade has /user/ryan');
+  assert.ok(getNode('/home/rg'), 'arcade has /home/rg');
+  assert.equal(getNode('/user'), null, 'arcade should not have /user');
+  assert.ok(getNode('/usr/bin/reboot'), 'arcade has /usr/bin/reboot');
+  assert.ok(getNode('/usr/bin/rm'), 'arcade has /usr/bin/rm');
+  assert.ok(getNode('/home/rg/TODO.md'), 'arcade has /home/rg/TODO.md');
+  assert.ok(getNode('/home/rg/DONE.md'), 'arcade has /home/rg/DONE.md');
 
   assert.equal(setActiveHost('moodful.ca'), true);
   assert.equal(getActiveHost(), 'moodful.ca');
-  assert.ok(getNode('/root'), 'moodful.ca has /root');
-  assert.equal(getNode('/user/ryan'), null, 'moodful.ca should not have arcade-only paths');
+  assert.ok(getNode('/home/root'), 'moodful.ca has /home/root');
+  assert.equal(getNode('/user'), null, 'moodful.ca should not have /user');
+  assert.ok(getNode('/usr/bin/reboot'), 'moodful.ca has /usr/bin/reboot');
+  assert.ok(getNode('/usr/bin/rm'), 'moodful.ca has /usr/bin/rm');
 
   assert.equal(setActiveHost('arcade'), true);
   assert.equal(getActiveHost(), 'arcade');
-  assert.ok(getNode('/user/ryan'), 'back on arcade');
+  assert.ok(getNode('/home/rg'), 'back on arcade');
 });
 
 test('setActiveHost: rejects unknown hosts and does not change active host', () => {

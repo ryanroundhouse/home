@@ -50,6 +50,61 @@
   - The terminal gains “remote” sessions without backend dependencies.
   - Host switching is centralized at the filesystem layer, keeping command implementations small.
 
+### ADR-0005 — Quests are event-driven, persisted, and reflected in TODO.md/DONE.md
+- **Status**: Accepted
+- **Date**: 2025-12-22
+- **Context**: We want a clear, connected “quest” flow tying actions (ssh → mail → reboot) together, with a single source of truth the player can inspect in the filesystem.
+- **Decision**:
+  - Persist quest progress in localStorage as a **versioned** blob: `rg_terminal_quests_v1` (owned/managed by `terminal.js`).
+  - Treat quests as a small **event-driven state machine**: terminal events set flags and trigger unlocks; no backend calls.
+  - Expose quest state to players via two filesystem-visible “system of record” files on arcade:
+    - **Active quests**: `cat /home/rg/TODO.md`
+    - **Completed quests**: `cat /home/rg/DONE.md`
+    - These files exist in `lib/terminalFilesystem.js`, but their **displayed content is rendered dynamically** in `terminal.js` when `cat`’d.
+
+#### Storage schema (current)
+- Key: `rg_terminal_quests_v1`
+- Shape (versioned, minimal booleans only):
+  - `version: 1`
+  - `moodfulReboot`:
+    - `sshRootFirst: boolean`
+    - `rebootEmailRead: boolean`
+    - `moodfulRebooted: boolean`
+
+#### Moodful quest wiring (example quest)
+- Event hooks are implemented in `terminal.js`:
+  - **First successful** `ssh root@moodful.ca`:
+    - sets `moodfulReboot.sshRootFirst = true`
+    - unlocks reboot-request mail by calling `unlockMailByKey(localStorage, 'moodful_root_first_ssh')`
+  - **Reading** reboot-request mail (`id: rg_arcade_ops_moodful_reboot_request_v1`):
+    - sets `moodfulReboot.rebootEmailRead = true` (activates TODO entry)
+  - **First** `reboot` while on `moodful.ca`:
+    - sets `moodfulReboot.moodfulRebooted = true`
+    - unlocks thank-you mail by calling `unlockMailByKey(localStorage, 'moodful_first_reboot')`
+
+#### Rendering rules (TODO vs DONE)
+- A quest **does not appear** in `TODO.md` until it is “activated” (for Moodful: when `rebootEmailRead === true`).
+- A quest appears in **exactly one** place:
+  - If complete: it appears in `DONE.md` and **is removed from** `TODO.md`.
+  - If incomplete (but activated): it appears in `TODO.md`.
+- Completion for Moodful is currently “all flags true”:
+  - `sshRootFirst && rebootEmailRead && moodfulRebooted`
+
+#### Conventions for adding a new quest (for future agents)
+- **Pick one quest id** under the quest state blob (e.g. `someQuestName`) and keep its flags flat booleans.
+- **Define deterministic mail ids** in `lib/terminalMailData.js` and gate reveal via `unlockKey` strings.
+- **Hook events in `terminal.js` only**:
+  - set quest flags (idempotent; only write on first transition)
+  - call `unlockMailByKey()` when an action should reveal mail
+  - update TODO/DONE rendering as needed (don’t mutate filesystem nodes)
+- **Add filesystem placeholders** for any “system of record” files (at least `/home/rg/TODO.md`, `/home/rg/DONE.md`) in `lib/terminalFilesystem.js` so they show up in `ls`.
+- **Keep rendering deterministic** and driven solely by localStorage state (no timestamps required unless needed for ordering).
+- **Reset compatibility**: if a new quest stores additional localStorage keys beyond `rg_terminal_quests_v1` (or introduces new persisted state), add those keys to the `rm -rf /` wipe list in `terminal.js` so “reset adventure” truly returns to a clean slate.
+- **Consequences**:
+  - Quests are deterministic and offline (no new network calls).
+  - The embedded filesystem contains the file entries, while the content is derived from persisted quest state at read time.
+  - Future quests should follow the same pattern: event hook → quest flag → optional mail unlock → TODO/DONE view.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

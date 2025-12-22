@@ -70,6 +70,28 @@ test('unlockMailByKey: reveals moodful reboot request in rg@arcade', () => {
   );
 });
 
+test('unlockMailByKey: reveals moodful reboot thank-you in rg@arcade', () => {
+  const storage = makeStorage();
+
+  const before = listInbox(storage, { user: 'rg', host: 'arcade' });
+  assert.equal(
+    before.rows.some((r) => /thank you/i.test(r.subject)),
+    false,
+    'thank-you email should be hidden before unlock'
+  );
+
+  const unlocked = unlockMailByKey(storage, 'moodful_first_reboot');
+  assert.equal(unlocked.ok, true);
+  assert.ok(unlocked.changed >= 1);
+
+  const after = listInbox(storage, { user: 'rg', host: 'arcade' });
+  assert.equal(
+    after.rows.some((r) => /thank you/i.test(r.subject)),
+    true,
+    'thank-you email should be visible after unlock'
+  );
+});
+
 test('listInbox: visible-only counts and newest-first ordering', () => {
   const storage = makeStorage();
 
