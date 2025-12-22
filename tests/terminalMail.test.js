@@ -36,7 +36,7 @@ test('default hidden: messages without hidden are not listed until unlocked', ()
   const storage = makeStorage();
 
   const before = listInbox(storage, { user: 'rg', host: 'arcade' });
-  // Seed creds message is visible; mission email (no hidden) is hidden by default.
+  // Seed creds message is visible; other emails without `hidden` are hidden by default.
   assert.equal(before.rows.length, 1);
   assert.match(before.rows[0].subject, /SSH creds/i);
 
@@ -46,6 +46,28 @@ test('default hidden: messages without hidden are not listed until unlocked', ()
 
   const after = listInbox(storage, { user: 'rg', host: 'arcade' });
   assert.equal(after.rows.length, 2, 'mission email becomes visible after unlock');
+});
+
+test('unlockMailByKey: reveals moodful reboot request in rg@arcade', () => {
+  const storage = makeStorage();
+
+  const before = listInbox(storage, { user: 'rg', host: 'arcade' });
+  assert.equal(
+    before.rows.some((r) => /reboot/i.test(r.subject)),
+    false,
+    'reboot request should be hidden before unlock'
+  );
+
+  const unlocked = unlockMailByKey(storage, 'moodful_root_first_ssh');
+  assert.equal(unlocked.ok, true);
+  assert.ok(unlocked.changed >= 1);
+
+  const after = listInbox(storage, { user: 'rg', host: 'arcade' });
+  assert.equal(
+    after.rows.some((r) => /reboot/i.test(r.subject)),
+    true,
+    'reboot request should be visible after unlock'
+  );
 });
 
 test('listInbox: visible-only counts and newest-first ordering', () => {

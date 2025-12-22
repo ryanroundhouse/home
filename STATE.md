@@ -34,6 +34,7 @@
 ## In-browser terminal (current capabilities)
 - **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to prior session (simulated; no networking).
 - **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
+- **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
 
 ## Current file tree (top-level)
 ```

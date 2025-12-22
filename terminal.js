@@ -10,7 +10,7 @@ import { formatDate, formatFileSize } from './lib/terminalFormat.js';
 import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
-import { listInbox, readMessage, mailUsageLines } from './lib/terminalMail.js';
+import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
 
 (() => {
   'use strict';
@@ -73,6 +73,7 @@ import { listInbox, readMessage, mailUsageLines } from './lib/terminalMail.js';
     const STORAGE_KEY_USER = 'rg_terminal_user';
     const STORAGE_KEY_HOME = 'rg_terminal_home_dir';
     const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
+    const STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH = 'rg_terminal_moodful_root_first_ssh';
 
     // Load from localStorage
     const loadFromStorage = () => {
@@ -482,6 +483,20 @@ import { listInbox, readMessage, mailUsageLines } from './lib/terminalMail.js';
       if (!auth.ok) {
         line('Permission denied, please try again.', 'err');
         return;
+      }
+
+      // One-time unlock: first successful ssh as root to moodful.ca reveals an ops email on rg@arcade.
+      try {
+        if (auth.host === 'moodful.ca' && auth.user === 'root') {
+          const seen = localStorage.getItem(STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH) === 'true';
+          if (!seen) {
+            localStorage.setItem(STORAGE_KEY_MOODFUL_ROOT_FIRST_SSH, 'true');
+            unlockMailByKey(localStorage, 'moodful_root_first_ssh');
+          }
+        }
+      } catch (e) {
+        // Best-effort: don't block ssh if storage is unavailable.
+        console.warn('Failed to unlock moodful root first-ssh mail:', e);
       }
 
       // Save return frame so `exit` can restore arcade session
