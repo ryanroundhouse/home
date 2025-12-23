@@ -11,6 +11,7 @@ import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
+import { playTimingBarGame } from './lib/timingBarGame.js';
 
 (() => {
   'use strict';
@@ -77,6 +78,7 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
     const STORAGE_KEY_HOME = 'rg_terminal_home_dir';
     const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
     const STORAGE_KEY_QUESTS = 'rg_terminal_quests_v1';
+    const STORAGE_KEY_DECRYPTED = 'rg_terminal_decrypted_v1';
 
     const QUESTS_VERSION = 1;
     const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
@@ -406,12 +408,80 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       line('  cd <dir>    - change directory (use ~ for home, .. for parent)', 'ok');
       line('  ls [dir]    - list directory contents', 'ok');
       line('  cat <file>  - display file contents', 'ok');
+      line('  decrypt <file> - timing exploit to unlock an encrypted file', 'ok');
       line('  pwd         - print working directory', 'ok');
       line('  mail        - check mailbox (simulated)', 'ok');
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
       line('  exit        - exit ssh session (back to arcade)', 'ok');
       line('  reboot      - reboot current host (simulated)', 'ok');
       line('  rm -rf /    - wipe all local state (DANGEROUS; asks to confirm)', 'ok');
+    };
+
+    /* -----------------------------
+     * Decrypt persistence (localStorage)
+     * ---------------------------*/
+    const decryptKeyFor = ({ host, path }) => `${String(host || 'unknown')}:${String(path || '')}`;
+
+    const loadDecryptedMap = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_DECRYPTED);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+        return parsed;
+      } catch {
+        return {};
+      }
+    };
+
+    const saveDecryptedMap = (m) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_DECRYPTED, JSON.stringify(m || {}));
+      } catch (e) {
+        console.warn('Failed to save decrypted map:', e);
+      }
+    };
+
+    const isFileDecrypted = ({ host, path }) => {
+      const key = decryptKeyFor({ host, path });
+      const m = loadDecryptedMap();
+      return m[key] === true;
+    };
+
+    const markFileDecrypted = ({ host, path }) => {
+      const key = decryptKeyFor({ host, path });
+      const m = loadDecryptedMap();
+      if (m[key] === true) return;
+      m[key] = true;
+      saveDecryptedMap(m);
+    };
+
+    const isEncryptedNode = ({ node, resolvedPath }) => {
+      if (!node || node.type !== 'file') return false;
+      if (node.encrypted !== true) return false;
+      // Encrypted unless marked decrypted in localStorage.
+      return !isFileDecrypted({ host: sessionHost, path: resolvedPath });
+    };
+
+    const renderEncryptedGarbage = (node) => {
+      const plaintext = String(node?.content || '');
+      const rawLines = plaintext.split('\n');
+      const lineCount = Math.max(6, rawLines.length);
+      const maxLen = rawLines.reduce((m, l) => Math.max(m, String(l || '').length), 0);
+      const width = Math.min(84, Math.max(32, Math.max(maxLen, 48)));
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:",.<>?/\\~';
+      const rand = () => chars[Math.floor(Math.random() * chars.length)];
+      const lineFor = () => {
+        let s = '';
+        for (let i = 0; i < width; i++) {
+          // occasional spaces to look like "structured" corruption
+          s += (Math.random() < 0.06) ? ' ' : rand();
+        }
+        return s;
+      };
+      const outLines = [];
+      for (let i = 0; i < lineCount; i++) outLines.push(lineFor());
+      return outLines.join('\n');
     };
 
     const cmdCd = (arg) => {
@@ -460,7 +530,11 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       for (const item of sorted) {
         const date = formatDate(item.modified);
         const size = formatFileSize(item.size);
-        const name = item.type === 'directory' ? item.name + '/' : item.name;
+        const resolvedItemPath = normalizePath(`${targetPath}/${item.name}`);
+        const enc = item.type === 'file' && isEncryptedNode({ node: item, resolvedPath: resolvedItemPath });
+        const name = item.type === 'directory'
+          ? item.name + '/'
+          : (enc ? `${item.name} [encrypted]` : item.name);
         const lineText = `${item.permissions} ${String(item.size).padStart(8)} ${date} ${name}`;
         line(lineText, 'ok');
       }
@@ -496,6 +570,12 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       
       if (node.type === 'directory') {
         line(`cat: ${arg}: Is a directory`, 'err');
+        return;
+      }
+
+      if (isEncryptedNode({ node, resolvedPath: resolved })) {
+        const garbage = renderEncryptedGarbage(node);
+        for (const lineText of garbage.split('\n')) line(lineText, 'ok');
         return;
       }
       
@@ -611,6 +691,8 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
         STORAGE_KEY_QUESTS,
         // mail
         'rg_terminal_mail_v1',
+        // decrypt state
+        STORAGE_KEY_DECRYPTED,
         // terminal session + boot state
         STORAGE_KEY_HISTORY,
         STORAGE_KEY_OUTPUT,
@@ -777,7 +859,71 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       }, 750);
     };
 
-    const run = (raw) => {
+    const cmdDecrypt = async (arg) => {
+      if (sessionHost !== ARCADE_HOST) {
+        line('decrypt: not installed on this host', 'err');
+        return;
+      }
+      if (!arg) {
+        line('decrypt: missing file operand', 'err');
+        line('usage: decrypt <file>', 'err');
+        return;
+      }
+
+      const resolved = resolvePath(arg, { currentDir, homeDir });
+      const node = getNode(resolved);
+      if (!node) {
+        line(`decrypt: ${arg}: No such file or directory`, 'err');
+        return;
+      }
+      if (node.type === 'directory') {
+        line(`decrypt: ${arg}: Is a directory`, 'err');
+        return;
+      }
+
+      if (!isEncryptedNode({ node, resolvedPath: resolved })) {
+        // Not encrypted (or already decrypted) — just show it.
+        cmdCat(arg);
+        return;
+      }
+
+      // Block terminal input while modal is running.
+      input.disabled = true;
+      setChip('decrypt: armed');
+      try {
+        const result = await playTimingBarGame({
+          requiredHits: 1,
+          timeoutMs: 25000,
+        });
+
+        if (result?.win) {
+          line('[+] PAYLOAD ACCEPTED', 'ok');
+          line('[+] MEMORY CORRUPTION SUCCESSFUL', 'ok');
+          line('[+] ACCESS GRANTED', 'ok');
+          markFileDecrypted({ host: sessionHost, path: resolved });
+          // After decrypt, display plaintext in terminal.
+          cmdCat(arg);
+          return;
+        }
+
+        // Failure cases.
+        if (result?.reason === 'aborted') {
+          line('[!] ABORTED', 'err');
+        } else if (result?.reason === 'timeout') {
+          line('[!] TIMEOUT', 'err');
+        } else {
+          line('[!] SEGMENTATION FAULT', 'err');
+        }
+        line('[!] INJECTION REJECTED', 'err');
+        line('[!] ACCESS DENIED', 'err');
+      } finally {
+        input.disabled = false;
+        setChip('type: help');
+        try { input.focus(); } catch {}
+      }
+    };
+
+    const run = async (raw) => {
       if (rebootInProgress) {
         line('system: rebooting (input locked)', 'err');
         return;
@@ -871,6 +1017,9 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
           break;
         case 'cat':
           cmdCat(arg);
+          break;
+        case 'decrypt':
+          await cmdDecrypt(arg);
           break;
         case 'pwd':
           cmdPwd();
@@ -1000,6 +1149,8 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
 
     const onKeydownGlobal = (e) => {
       if (e.key === 'Escape') {
+        // If a blocking modal is open above the terminal, do not close the terminal.
+        if (document.body.classList.contains('decrypt-open')) return;
         e.preventDefault();
         close();
       }
@@ -1012,12 +1163,12 @@ import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/t
       if (e.target === overlay) close();
     });
 
-    input.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', async (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const value = input.value;
         input.value = '';
-        run(value);
+        await run(value);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (history.length === 0) return;

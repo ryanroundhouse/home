@@ -12,6 +12,8 @@ test('multi-host filesystem: can switch active host and resolve paths accordingl
   assert.ok(getNode('/usr/bin/rm'), 'arcade has /usr/bin/rm');
   assert.ok(getNode('/home/rg/TODO.md'), 'arcade has /home/rg/TODO.md');
   assert.ok(getNode('/home/rg/DONE.md'), 'arcade has /home/rg/DONE.md');
+  assert.ok(getNode('/home/rg/bin/decrypt'), 'arcade has /home/rg/bin/decrypt');
+  assert.equal(getNode('/home/rg/Documents/vault.txt')?.encrypted, true, 'arcade has an encrypted file seed');
 
   assert.equal(setActiveHost('moodful.ca'), true);
   assert.equal(getActiveHost(), 'moodful.ca');

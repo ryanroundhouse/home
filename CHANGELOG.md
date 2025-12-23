@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-23**: Added encrypted files + `decrypt <file>` command. Encrypted files `cat` as corrupted ASCII until unlocked via a timing-bar minigame modal; successful decrypt persists in localStorage and `rm -rf /` now wipes decrypt state too.
 - **2025-12-21**: Added simulated multi-host SSH to the in-browser terminal: `ssh <user>@<host>` prompts for password and switches filesystem/prompt; `exit` returns to the prior arcade directory. Includes test host `moodful.ca` (root/wow) and Node tests.
 - **2025-12-21**: Added a one-time SSH milestone unlock: first successful `ssh root@moodful.ca` reveals a hidden `ops@moodful.ca` reboot request email in `rg@arcade`.
 - **2025-12-22**: Added a simulated `reboot` command: counts down then closes the terminal on `arcade`, or drops you back to the prior session when run on an ssh host.

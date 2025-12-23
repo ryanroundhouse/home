@@ -105,6 +105,20 @@
   - The embedded filesystem contains the file entries, while the content is derived from persisted quest state at read time.
   - Future quests should follow the same pattern: event hook → quest flag → optional mail unlock → TODO/DONE view.
 
+### ADR-0006 — Encrypted files + decrypt minigame are localStorage-backed and host/path keyed
+- **Status**: Accepted
+- **Date**: 2025-12-23
+- **Context**: We want certain files in the simulated terminal filesystem to appear encrypted (garbled output) until the user successfully completes a short skill-based minigame triggered by a new `decrypt` command, with progress surviving refreshes.
+- **Decision**:
+  - Add an optional `encrypted: true` flag to file nodes in `lib/terminalFilesystem.js`; missing/false means plaintext.
+  - Implement `decrypt <file>` in `terminal.js` as a blocking modal minigame (`lib/timingBarGame.js`) that resolves a Promise `{ win, accuracy, reason }` so the CLI can `await` it.
+  - Persist decrypt state in localStorage under a versioned key (`rg_terminal_decrypted_v1`) keyed by `${host}:${absolutePath}` so host switching does not leak unlocks between environments.
+  - Maintain reset correctness by including the decrypt key in the `rm -rf /` wipe list (`terminal.js`).
+- **Consequences**:
+  - Encrypted content remains fully offline and deterministic (no crypto, no network).
+  - The terminal command dispatcher can now `await` UI-driven interactions (future minigames can follow the same pattern).
+  - If additional minigame state is persisted in the future, it should also be added to the reset wipe list.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

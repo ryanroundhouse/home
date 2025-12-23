@@ -37,7 +37,8 @@
 - **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
 - **Reboot**: `reboot` runs a short countdown; on `arcade` it closes the terminal, and on ssh hosts it drops you back to the prior session.
 - **Quests**: `cat /home/rg/TODO.md` shows active quest progress and `cat /home/rg/DONE.md` shows completed quests (activated by reading the Moodful reboot-request email; completing the Moodful reboot unlocks a thank-you email).
-- **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session) so you can start fresh.
+- **Encrypted files**: certain files have `encrypted: true` in the embedded filesystem; `cat` prints corrupted ASCII until you successfully run `decrypt <file>` (timing-bar minigame) to unlock plaintext (persists in localStorage).
+- **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session, decrypt unlocks) so you can start fresh.
 
 ## Current file tree (top-level)
 ```
@@ -59,7 +60,8 @@
 │   ├── terminalFilesystem.js
 │   ├── terminalSsh.js
 │   ├── terminalMail.js
-│   └── terminalMailData.js
+│   ├── terminalMailData.js
+│   └── timingBarGame.js
 ├── index.html
 ├── about.html
 ├── projects.html
