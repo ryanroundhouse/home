@@ -586,7 +586,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       }
 
       // Special file: vault.txt (dynamic credentials ledger; only after decrypt).
-      if (sessionHost === ARCADE_HOST && resolved === '/home/rg/Documents/vault.txt') {
+      if (sessionHost === ARCADE_HOST && resolved === '/home/rg/vault.txt') {
         const text = formatVaultTxt(loadVaultState(localStorage));
         for (const lineText of text.split('\n')) line(lineText, 'ok');
         return;
@@ -677,7 +677,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         if (creds) {
           const stored = addCredential(localStorage, creds);
           if (stored.ok && stored.changed) {
-            line('credentials stored in ~/Documents/vault.txt', 'ok');
+            line('credentials stored in ~/vault.txt', 'ok');
           }
         }
       } catch (e) {
