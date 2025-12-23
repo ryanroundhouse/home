@@ -11,6 +11,12 @@ import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
+import {
+  addCredential,
+  loadVaultState,
+  formatVaultTxt,
+  TERMINAL_VAULT_STORAGE_KEY,
+} from './lib/terminalVault.js';
 import { playTimingBarGame } from './lib/timingBarGame.js';
 
 (() => {
@@ -578,6 +584,13 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         for (const lineText of garbage.split('\n')) line(lineText, 'ok');
         return;
       }
+
+      // Special file: vault.txt (dynamic credentials ledger; only after decrypt).
+      if (sessionHost === ARCADE_HOST && resolved === '/home/rg/Documents/vault.txt') {
+        const text = formatVaultTxt(loadVaultState(localStorage));
+        for (const lineText of text.split('\n')) line(lineText, 'ok');
+        return;
+      }
       
       if (node.content) {
         const lines = node.content.split('\n');
@@ -591,6 +604,34 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
 
     const cmdPwd = () => {
       line(currentDir, 'ok');
+    };
+
+    const extractCredsFromMailLines = (lines) => {
+      const all = Array.isArray(lines) ? lines : [];
+      // Msg shape is: headers, blank line, body. We prefer scanning body only.
+      const blankIdx = all.findIndex((l) => String(l ?? '') === '');
+      const scan = blankIdx >= 0 ? all.slice(blankIdx + 1) : all;
+      const scanLines = scan.join('\n').split('\n');
+
+      let host = '';
+      let user = '';
+      let password = '';
+
+      for (const raw of scanLines) {
+        const lineText = String(raw ?? '');
+
+        const hostMatch = lineText.match(/^\s*(host|server)\s*:\s*(.+?)\s*$/i);
+        if (hostMatch && !host) host = String(hostMatch[2] || '').trim();
+
+        const userMatch = lineText.match(/^\s*(user|username)\s*:\s*(.+?)\s*$/i);
+        if (userMatch && !user) user = String(userMatch[2] || '').trim();
+
+        const passMatch = lineText.match(/^\s*(pass|password)\s*:\s*(.+?)\s*$/i);
+        if (passMatch && !password) password = String(passMatch[2] || '').trim();
+      }
+
+      if (!host || !user) return null;
+      return { host, user, ...(password ? { password } : {}) };
     };
 
     const cmdMail = (arg) => {
@@ -629,6 +670,19 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         return;
       }
       for (const l of msg.lines) line(l, 'ok');
+
+      // Vault hook: store credentials when an email contains Host/User/(Pass).
+      try {
+        const creds = extractCredsFromMailLines(msg.lines);
+        if (creds) {
+          const stored = addCredential(localStorage, creds);
+          if (stored.ok && stored.changed) {
+            line('credentials stored in ~/Documents/vault.txt', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record vault credentials from mail:', e);
+      }
 
       // Quest hook: reading the reboot request email activates the quest in TODO.md.
       try {
@@ -689,6 +743,8 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       const keys = [
         // quests
         STORAGE_KEY_QUESTS,
+        // vault credentials
+        TERMINAL_VAULT_STORAGE_KEY,
         // mail
         'rg_terminal_mail_v1',
         // decrypt state

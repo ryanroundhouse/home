@@ -119,6 +119,20 @@
   - The terminal command dispatcher can now `await` UI-driven interactions (future minigames can follow the same pattern).
   - If additional minigame state is persisted in the future, it should also be added to the reset wipe list.
 
+### ADR-0007 — Vault credentials ledger (dynamic `vault.txt`, localStorage-backed)
+- **Status**: Accepted
+- **Date**: 2025-12-23
+- **Context**: We want `~/Documents/vault.txt` to act like a “special file” that shows credentials learned during gameplay (e.g., from emails), without adding any backend/network dependencies, and with full reset support.
+- **Decision**:
+  - Implement a small vault subsystem in `lib/terminalVault.js` with a versioned localStorage key: `rg_terminal_vault_v1`.
+  - Record credentials when reading mail that includes `Host:` + `User:` (+ optional `Pass:`) and print a hint: `credentials stored in ~/Documents/vault.txt`.
+  - Render `cat ~/Documents/vault.txt` dynamically (grouped by host) **after** the file is decrypted, similar to the existing “system-of-record” pattern used for `/home/rg/TODO.md` and `/home/rg/DONE.md`.
+  - Maintain reset correctness by including `rg_terminal_vault_v1` in the `rm -rf /` wipe list in `terminal.js`.
+- **Consequences**:
+  - Vault state persists across refreshes but is fully offline and deterministic.
+  - The embedded filesystem’s `vault.txt` content becomes a placeholder; displayed content is derived from localStorage once decrypted.
+  - Future credential sources should follow the same pattern: event hook in `terminal.js` → `lib/terminalVault.js` persistence → dynamic `cat` rendering.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

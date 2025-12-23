@@ -39,6 +39,7 @@
 - **Quests**: `cat /home/rg/TODO.md` shows active quest progress and `cat /home/rg/DONE.md` shows completed quests (activated by reading the Moodful reboot-request email; completing the Moodful reboot unlocks a thank-you email).
 - **Encrypted files**: certain files have `encrypted: true` in the embedded filesystem; `cat` prints corrupted ASCII until you successfully run `decrypt <file>` (timing-bar minigame) to unlock plaintext (persists in localStorage).
 - **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session, decrypt unlocks) so you can start fresh.
+- **Vault**: `~/Documents/vault.txt` is an encrypted “special file”. After decrypting it, `cat ~/Documents/vault.txt` shows a dynamic ledger of stored credentials learned from emails (persisted in localStorage). `rm -rf /` wipes vault state too.
 
 ## Current file tree (top-level)
 ```
@@ -61,6 +62,7 @@
 │   ├── terminalSsh.js
 │   ├── terminalMail.js
 │   ├── terminalMailData.js
+│   ├── terminalVault.js
 │   └── timingBarGame.js
 ├── index.html
 ├── about.html
@@ -80,7 +82,8 @@
     ├── terminalFilesystemHosts.test.js
     ├── terminalFormat.test.js
     ├── terminalPaths.test.js
-    └── terminalSsh.test.js
+    ├── terminalSsh.test.js
+    └── terminalVault.test.js
 ```
 
 ## Handoff requirements
