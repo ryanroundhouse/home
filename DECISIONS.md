@@ -151,6 +151,41 @@
   - “Progress” can be driven by reading alone, consistent with the mail/quest patterns.
   - No frontend deps and no network calls are required.
 
+### ADR-0009 — Enforce UNIX-like permissions for terminal filesystem operations
+- **Status**: Accepted
+- **Date**: 2025-12-24
+- **Context**: The embedded filesystem already stores `permissions`/`owner`/`group`, but the terminal `cd`/`ls`/`cat` commands did not enforce them. We need root-only directories (e.g. `/fantasy-football-scores`) to be inaccessible to non-root users.
+- **Decision**:
+  - Add a small permission helper module `lib/terminalPermissions.js` that parses mode strings like `drwxr-xr-x` and computes effective `r/w/x` access by `owner/group/other` with a `root` bypass.
+  - Update `terminal.js` to enforce permissions for `cd`/`ls`/`cat`, including checking parent-directory traversal (`x`) to prevent accessing files inside non-traversable directories.
+- **Consequences**:
+  - Host filesystem seeds can now safely include “secret” directories guarded by mode bits without adding any backend/auth system.
+  - Future content can use `permissions` for puzzles and access control consistently across commands.
+
+### ADR-00010 — Persist ssh “return frame” so refresh can always return to arcade
+- **Status**: Accepted
+- **Date**: 2025-12-23
+- **Context**: SSH sessions are simulated and the current `user@host` is persisted so refresh restores the remote host. Previously, the “return frame” used by `exit`/remote `reboot` lived only in memory, so a refresh could strand you on a remote host with no way back.
+- **Decision**:
+  - Persist the ssh return frame in localStorage (`rg_terminal_ssh_return_frame_v1`).
+  - On load, if the user is on a remote host with no stored frame, fall back to restoring `rg@arcade`.
+  - Make `exit` and remote `reboot` restore `rg@arcade` even when the frame is missing.
+- **Consequences**:
+  - Refreshing the page no longer breaks the `exit` flow; the terminal can always recover to `rg@arcade`.
+  - SSH remains single-hop (`ssh` is only allowed from arcade), but the behavior is now robust across refreshes.
+
+### ADR-00011 — Installable binaries via localStorage-backed ~/bin overlay (`get`)
+- **Status**: Accepted
+- **Date**: 2025-12-24
+- **Context**: We want a `get` command that “downloads” binaries into `~/bin` on the current simulated host and persists across refreshes, but the embedded filesystem seed data is static.
+- **Decision**:
+  - Implement installs as a versioned localStorage blob (`rg_terminal_bin_v1`) scoped to `user@host`.
+  - Use a minimal filesystem overlay wrapper around `getNode()` / `getDirectoryContents()` so `cd/ls/cat` can “see” `~/bin` and installed files without mutating the embedded filesystem catalog.
+  - Keep the available catalog small and deterministic (currently only `memcorrupt`).
+- **Consequences**:
+  - Installs persist across refreshes and are reset by `rm -rf /`.
+  - `~/bin` can now be used for future puzzles without adding network calls or runtime deps.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

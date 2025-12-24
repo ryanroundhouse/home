@@ -12,6 +12,7 @@ import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './l
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
 import { listGroup, readPost, TERMINAL_BBS_STORAGE_KEY } from './lib/terminalBbs.js';
+import { canListDir, canReadFile, canTraversePathPrefixes } from './lib/terminalPermissions.js';
 import {
   addCredential,
   loadVaultState,
@@ -19,6 +20,13 @@ import {
   TERMINAL_VAULT_STORAGE_KEY,
 } from './lib/terminalVault.js';
 import { playTimingBarGame } from './lib/timingBarGame.js';
+import { listProcesses } from './lib/terminalPs.js';
+import {
+  makeFilesystemOverlay,
+  installBinary,
+  isBinaryInstalled,
+  TERMINAL_BIN_STORAGE_KEY,
+} from './lib/terminalGet.js';
 
 (() => {
   'use strict';
@@ -84,14 +92,73 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     const STORAGE_KEY_HOST = 'rg_terminal_host';
     const STORAGE_KEY_USER = 'rg_terminal_user';
     const STORAGE_KEY_HOME = 'rg_terminal_home_dir';
+    const STORAGE_KEY_SSH_RETURN = 'rg_terminal_ssh_return_frame_v1';
     const STORAGE_KEY_FIRST_BOOT = 'rg_terminal_first_boot';
     const STORAGE_KEY_QUESTS = 'rg_terminal_quests_v1';
     const STORAGE_KEY_DECRYPTED = 'rg_terminal_decrypted_v1';
+    const STORAGE_KEY_BIN = TERMINAL_BIN_STORAGE_KEY;
 
     const QUESTS_VERSION = 1;
     const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
     const BBS_GROUP_ID = 'neon.missions';
     const BBS_MISSION_POST_ID = 'neon_missions_fantasy_score_quietly_v1';
+
+    const defaultArcadeFrame = () => ({
+      host: ARCADE_HOST,
+      user: ARCADE_USER,
+      dir: ARCADE_HOME_DIR,
+      homeDir: ARCADE_HOME_DIR,
+    });
+
+    const sanitizeReturnFrame = (raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+      const host = String(raw.host || '').trim() || ARCADE_HOST;
+      const user = String(raw.user || '').trim() || (host === ARCADE_HOST ? ARCADE_USER : 'root');
+      const dir = String(raw.dir || '').trim() || (host === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${user}`);
+      const homeDir = String(raw.homeDir || '').trim() || (host === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${user}`);
+      return { host, user, dir, homeDir };
+    };
+
+    const loadSshReturnFrameFromStorage = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_SSH_RETURN);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return sanitizeReturnFrame(parsed);
+      } catch {
+        return null;
+      }
+    };
+
+    const saveSshReturnFrameToStorage = (frame) => {
+      try {
+        if (!frame) {
+          localStorage.removeItem(STORAGE_KEY_SSH_RETURN);
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY_SSH_RETURN, JSON.stringify(frame));
+      } catch (e) {
+        console.warn('Failed to save ssh return frame:', e);
+      }
+    };
+
+    const ensureValidDirsForActiveHost = () => {
+      const { getNode: fsGetNode } = makeFilesystemOverlay({
+        storage: localStorage,
+        host: sessionHost,
+        user: sessionUser,
+        homeDir,
+        baseGetNode: getNode,
+        baseGetDirectoryContents: getDirectoryContents,
+      });
+
+      if (!fsGetNode(homeDir) || fsGetNode(homeDir)?.type !== 'directory') {
+        homeDir = (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${sessionUser}`);
+      }
+      if (!fsGetNode(currentDir) || fsGetNode(currentDir)?.type !== 'directory') {
+        currentDir = homeDir;
+      }
+    };
 
     // Load from localStorage
     const loadFromStorage = () => {
@@ -123,13 +190,21 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
           currentDir = savedDir;
         }
 
+        // Restore ssh return frame (so refresh doesn't strand you on a remote host).
+        sshReturnFrame = loadSshReturnFrameFromStorage();
+        if (sessionHost !== ARCADE_HOST && !sshReturnFrame) {
+          // If we're on a remote host with no return frame, fall back to arcade.
+          sshReturnFrame = defaultArcadeFrame();
+          saveSshReturnFrameToStorage(sshReturnFrame);
+        }
+        if (sessionHost === ARCADE_HOST && sshReturnFrame) {
+          // If we're home, clear any stale return frame.
+          sshReturnFrame = null;
+          saveSshReturnFrameToStorage(null);
+        }
+
         // Validate directories against the active host filesystem
-        if (!getNode(homeDir) || getNode(homeDir)?.type !== 'directory') {
-          homeDir = (sessionHost === ARCADE_HOST ? ARCADE_HOME_DIR : `/home/${sessionUser}`);
-        }
-        if (!getNode(currentDir) || getNode(currentDir)?.type !== 'directory') {
-          currentDir = homeDir;
-        }
+        ensureValidDirsForActiveHost();
       } catch (e) {
         console.warn('Failed to load terminal state from localStorage:', e);
       }
@@ -143,6 +218,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         localStorage.setItem(STORAGE_KEY_HOST, sessionHost);
         localStorage.setItem(STORAGE_KEY_USER, sessionUser);
         localStorage.setItem(STORAGE_KEY_HOME, homeDir);
+        saveSshReturnFrameToStorage(sshReturnFrame);
       } catch (e) {
         console.warn('Failed to save terminal state to localStorage:', e);
       }
@@ -443,6 +519,8 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       line('  cat <file>  - display file contents', 'ok');
       line('  decrypt <file> - timing exploit to unlock an encrypted file', 'ok');
       line('  pwd         - print working directory', 'ok');
+      line('  ps          - list running processes (simulated)', 'ok');
+      line('  get <name>  - download/install a binary into ~/bin (simulated)', 'ok');
       line('  mail        - check mailbox (simulated)', 'ok');
       line('  bbs         - connect to Neon-City (simulated)', 'ok');
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
@@ -450,6 +528,16 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       line('  reboot      - reboot current host (simulated)', 'ok');
       line('  rm -rf /    - wipe all local state (DANGEROUS; asks to confirm)', 'ok');
     };
+
+    const getFs = () =>
+      makeFilesystemOverlay({
+        storage: localStorage,
+        host: sessionHost,
+        user: sessionUser,
+        homeDir,
+        baseGetNode: getNode,
+        baseGetDirectoryContents: getDirectoryContents,
+      });
 
     /* -----------------------------
      * Decrypt persistence (localStorage)
@@ -519,10 +607,11 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     };
 
     const cmdCd = (arg) => {
+      const { getNode: fsGetNode } = getFs();
       // If no argument, go to home directory
       const targetPath = arg ? arg : '~';
       const resolved = resolvePath(targetPath, { currentDir, homeDir });
-      const node = getNode(resolved);
+      const node = fsGetNode(resolved);
       
       if (!node) {
         line(`cd: ${targetPath}: No such file or directory`, 'err');
@@ -533,6 +622,11 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         line(`cd: ${targetPath}: Not a directory`, 'err');
         return;
       }
+
+      if (!canTraversePathPrefixes({ path: resolved, user: sessionUser, getNode: fsGetNode, includeTargetDir: true })) {
+        line(`cd: ${targetPath}: Permission denied`, 'err');
+        return;
+      }
       
       currentDir = resolved;
       updatePrompt();
@@ -540,11 +634,25 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     };
 
     const cmdLs = (arg) => {
+      const { getNode: fsGetNode, getDirectoryContents: fsGetDirectoryContents } = getFs();
       const targetPath = arg ? resolvePath(arg, { currentDir, homeDir }) : currentDir;
-      const contents = getDirectoryContents(targetPath);
+      const targetNode = fsGetNode(targetPath);
+
+      if (targetNode && targetNode.type === 'directory') {
+        if (!canTraversePathPrefixes({ path: targetPath, user: sessionUser, getNode: fsGetNode, includeTargetDir: false })) {
+          line(`ls: ${arg || currentDir}: Permission denied`, 'err');
+          return;
+        }
+        if (!canListDir({ node: targetNode, user: sessionUser })) {
+          line(`ls: ${arg || currentDir}: Permission denied`, 'err');
+          return;
+        }
+      }
+
+      const contents = fsGetDirectoryContents(targetPath);
       
       if (contents === null) {
-        const node = getNode(targetPath);
+        const node = fsGetNode(targetPath);
         if (!node) {
           line(`ls: ${arg || currentDir}: No such file or directory`, 'err');
         } else {
@@ -575,6 +683,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     };
 
     const cmdCat = (arg) => {
+      const { getNode: fsGetNode } = getFs();
       if (!arg) {
         line('cat: missing file operand', 'err');
         line('usage: cat <file>', 'err');
@@ -595,7 +704,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         return;
       }
 
-      const node = getNode(resolved);
+      const node = fsGetNode(resolved);
       
       if (!node) {
         line(`cat: ${arg}: No such file or directory`, 'err');
@@ -604,6 +713,16 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       
       if (node.type === 'directory') {
         line(`cat: ${arg}: Is a directory`, 'err');
+        return;
+      }
+
+      if (!canTraversePathPrefixes({ path: resolved, user: sessionUser, getNode: fsGetNode, includeTargetDir: false })) {
+        line(`cat: ${arg}: Permission denied`, 'err');
+        return;
+      }
+
+      if (!canReadFile({ node, user: sessionUser })) {
+        line(`cat: ${arg}: Permission denied`, 'err');
         return;
       }
 
@@ -632,6 +751,134 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
 
     const cmdPwd = () => {
       line(currentDir, 'ok');
+    };
+
+    const cmdPs = () => {
+      const procs = listProcesses({ host: sessionHost, user: sessionUser });
+      if (!procs || procs.length === 0) {
+        line('ps: no processes found', 'ok');
+        return;
+      }
+
+      const cols = {
+        pid: 'PID',
+        user: 'USER',
+        tty: 'TTY',
+        stat: 'STAT',
+        time: 'TIME',
+        command: 'COMMAND',
+      };
+
+      const rows = procs.map((p) => ({
+        pid: String(p.pid ?? ''),
+        user: String(p.user ?? ''),
+        tty: String(p.tty ?? ''),
+        stat: String(p.stat ?? ''),
+        time: String(p.time ?? ''),
+        command: String(p.command ?? ''),
+      }));
+
+      const widths = {
+        pid: Math.max(cols.pid.length, ...rows.map((r) => r.pid.length)),
+        user: Math.max(cols.user.length, ...rows.map((r) => r.user.length)),
+        tty: Math.max(cols.tty.length, ...rows.map((r) => r.tty.length)),
+        stat: Math.max(cols.stat.length, ...rows.map((r) => r.stat.length)),
+        time: Math.max(cols.time.length, ...rows.map((r) => r.time.length)),
+      };
+
+      const padR = (s, w) => (s + ' '.repeat(Math.max(0, w - s.length)));
+      const padL = (s, w) => (' '.repeat(Math.max(0, w - s.length)) + s);
+
+      line(
+        [
+          padL(cols.pid, widths.pid),
+          padR(cols.user, widths.user),
+          padR(cols.tty, widths.tty),
+          padR(cols.stat, widths.stat),
+          padR(cols.time, widths.time),
+          cols.command,
+        ].join(' '),
+        'ok'
+      );
+
+      for (const r of rows) {
+        line(
+          [
+            padL(r.pid, widths.pid),
+            padR(r.user, widths.user),
+            padR(r.tty, widths.tty),
+            padR(r.stat, widths.stat),
+            padR(r.time, widths.time),
+            r.command,
+          ].join(' '),
+          'ok'
+        );
+      }
+    };
+
+    const cmdGet = (arg) => {
+      const name = String(arg || '').trim();
+      if (!name || name.toLowerCase() === 'help' || name === '-h' || name === '--help') {
+        line('usage: get <name>', 'ok');
+        line('available:', 'ok');
+        line('  memcorrupt', 'ok');
+        return;
+      }
+
+      const res = installBinary(localStorage, {
+        host: sessionHost,
+        user: sessionUser,
+        homeDir,
+        name,
+      });
+
+      if (!res.ok) {
+        line(`get: ${res.error || 'failed'}`, 'err');
+        return;
+      }
+
+      if (!res.changed) {
+        line(`get: ${name}: already installed`, 'ok');
+        return;
+      }
+
+      // Print something that feels like a real fetch/install (still fully offline).
+      const size = '32.0K';
+      const dest = `~/bin/${String(name).trim()}`;
+      line(`get: resolving ${sessionHost}...`, 'ok');
+      line(`get: connecting to mirror://${sessionHost}/repo ... connected`, 'ok');
+      line(`get: downloading ${name} (${size})`, 'ok');
+      line(`[==============================] 100%  ${size}`, 'ok');
+      line(`get: saved '${name}' -> ${dest}`, 'ok');
+    };
+
+    const cmdMemcorrupt = (arg) => {
+      if (!isBinaryInstalled(localStorage, { host: sessionHost, user: sessionUser, name: 'memcorrupt' })) {
+        line('memcorrupt: not installed. run: get memcorrupt', 'err');
+        return;
+      }
+
+      const a = String(arg || '').trim();
+      if (!a) {
+        line('memcorrupt: missing PID', 'err');
+        line("hint: run 'ps' to find a PID, then: memcorrupt <pid>", 'ok');
+        return;
+      }
+
+      const pid = Number(a);
+      if (!Number.isInteger(pid) || pid <= 0) {
+        line(`memcorrupt: invalid pid: ${a}`, 'err');
+        return;
+      }
+
+      const procs = listProcesses({ host: sessionHost, user: sessionUser });
+      const exists = Array.isArray(procs) && procs.some((p) => Number(p?.pid) === pid);
+      if (!exists) {
+        line(`memcorrupt: PID ${pid} not found on ${sessionHost}`, 'err');
+        return;
+      }
+
+      line('trying', 'ok');
     };
 
     const extractCredsFromMailLines = (lines) => {
@@ -918,6 +1165,10 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         'rg_terminal_mail_v1',
         // decrypt state
         STORAGE_KEY_DECRYPTED,
+        // installed binaries
+        STORAGE_KEY_BIN,
+        // ssh return frame
+        STORAGE_KEY_SSH_RETURN,
         // terminal session + boot state
         STORAGE_KEY_HISTORY,
         STORAGE_KEY_OUTPUT,
@@ -983,6 +1234,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         dir: currentDir,
         homeDir,
       };
+      saveSshReturnFrameToStorage(sshReturnFrame);
 
       setActiveHost(auth.host);
       sessionHost = auth.host;
@@ -1060,21 +1312,22 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         }
 
         // Remote reboot: return to the session we came from (like `exit`).
+        let frame = sshReturnFrame || loadSshReturnFrameFromStorage() || defaultArcadeFrame();
         if (!sshReturnFrame) {
-          line('reboot: lost return frame; cannot restore previous session', 'err');
-          rebootInProgress = false;
-          enableInput();
-          return;
+          line('reboot: lost return frame; restoring arcade session', 'err');
         }
-
-        const frame = sshReturnFrame;
         sshReturnFrame = null;
+        saveSshReturnFrameToStorage(null);
 
-        setActiveHost(frame.host);
+        if (!setActiveHost(frame.host)) {
+          frame = defaultArcadeFrame();
+          setActiveHost(frame.host);
+        }
         sessionHost = frame.host;
         sessionUser = frame.user;
         homeDir = frame.homeDir;
         currentDir = frame.dir;
+        ensureValidDirsForActiveHost();
 
         updatePrompt();
         saveToStorage();
@@ -1086,6 +1339,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     };
 
     const cmdDecrypt = async (arg) => {
+      const { getNode: fsGetNode } = getFs();
       if (sessionHost !== ARCADE_HOST) {
         line('decrypt: not installed on this host', 'err');
         return;
@@ -1097,7 +1351,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       }
 
       const resolved = resolvePath(arg, { currentDir, homeDir });
-      const node = getNode(resolved);
+      const node = fsGetNode(resolved);
       if (!node) {
         line(`decrypt: ${arg}: No such file or directory`, 'err');
         return;
@@ -1254,6 +1508,15 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         case 'pwd':
           cmdPwd();
           break;
+        case 'ps':
+          cmdPs();
+          break;
+        case 'get':
+          cmdGet(arg);
+          break;
+        case 'memcorrupt':
+          cmdMemcorrupt(arg);
+          break;
         case 'mail':
           cmdMail(arg);
           break;
@@ -1284,18 +1547,30 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
           break;
         }
         case 'exit': {
-          if (sessionHost === ARCADE_HOST || !sshReturnFrame) {
+          if (sessionHost === ARCADE_HOST) {
+            // If we're already home, treat as not-in-session and clear any stale frame.
+            sshReturnFrame = null;
+            saveSshReturnFrameToStorage(null);
             line('exit: not in an ssh session', 'err');
             break;
           }
-          const frame = sshReturnFrame;
-          sshReturnFrame = null;
 
-          setActiveHost(frame.host);
+          let frame = sshReturnFrame || loadSshReturnFrameFromStorage() || defaultArcadeFrame();
+          if (!sshReturnFrame) {
+            line('exit: lost return frame; restoring arcade session', 'err');
+          }
+          sshReturnFrame = null;
+          saveSshReturnFrameToStorage(null);
+
+          if (!setActiveHost(frame.host)) {
+            frame = defaultArcadeFrame();
+            setActiveHost(frame.host);
+          }
           sessionHost = frame.host;
           sessionUser = frame.user;
           homeDir = frame.homeDir;
           currentDir = frame.dir;
+          ensureValidDirsForActiveHost();
 
           updatePrompt();
           saveToStorage();

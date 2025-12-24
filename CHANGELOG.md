@@ -1,6 +1,11 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-24**: Added `get` + installable binaries with a localStorage-backed `~/bin` overlay (per user@host). `get memcorrupt` installs `memcorrupt` with download-like output; running it validates PID against `ps` and prints `trying` (placeholder).
+- **2025-12-24**: Added `ps` to the terminal. All hosts show your current `-bash` session; `fantasy-football-league.com` also shows a running webserver service with a stable PID for follow-on “memory corruption” commands.
+- **2025-12-24**: Expanded `fantasy-football-league.com` with additional users + home directories and added a root-only `/fantasy-football-scores` folder with head-to-head matchup score files.
+- **2025-12-24**: Terminal `cd`/`ls`/`cat` now enforce embedded UNIX-style `permissions` (with `root` bypass) via `lib/terminalPermissions.js`, plus new/updated tests.
+- **2025-12-23**: Fixed terminal SSH state loss on refresh by persisting the ssh “return frame” in localStorage. `exit` and remote `reboot` now always restore `rg@arcade` even if the return frame was lost.
 - **2025-12-23**: Added extra spacing when reading a BBS post (menu/subject/body) for readability.
 - **2025-12-23**: BBS now disconnects after reading a post so the full message remains visible.
 - **2025-12-23**: Fixed Neon-City BBS banner text (spelling).
