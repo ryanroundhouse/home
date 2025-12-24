@@ -11,7 +11,7 @@ import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
-import { listGroup, readPost, TERMINAL_BBS_STORAGE_KEY } from './lib/terminalBbs.js';
+import { listGroup, readPost, loadBbsState, saveBbsState, TERMINAL_BBS_STORAGE_KEY } from './lib/terminalBbs.js';
 import { canListDir, canReadFile, canTraversePathPrefixes } from './lib/terminalPermissions.js';
 import {
   addCredential,
@@ -20,6 +20,7 @@ import {
   TERMINAL_VAULT_STORAGE_KEY,
 } from './lib/terminalVault.js';
 import { playTimingBarGame } from './lib/timingBarGame.js';
+import { openMemoryInjectionGame } from './lib/memoryInjectionGame.js';
 import { listProcesses } from './lib/terminalPs.js';
 import {
   makeFilesystemOverlay,
@@ -27,6 +28,11 @@ import {
   isBinaryInstalled,
   TERMINAL_BIN_STORAGE_KEY,
 } from './lib/terminalGet.js';
+import {
+  isProcessCorrupted,
+  markProcessCorrupted,
+  TERMINAL_MEMCORRUPT_STORAGE_KEY,
+} from './lib/terminalMemcorrupt.js';
 
 (() => {
   'use strict';
@@ -102,6 +108,7 @@ import {
     const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
     const BBS_GROUP_ID = 'neon.missions';
     const BBS_MISSION_POST_ID = 'neon_missions_fantasy_score_quietly_v1';
+    const BBS_MISSION_THANKS_POST_ID = 'neon_missions_fantasy_score_quietly_thanks_v1';
 
     const defaultArcadeFrame = () => ({
       host: ARCADE_HOST,
@@ -236,6 +243,8 @@ import {
       },
       fantasyScoreFix: {
         postRead: false,
+        memoryInjected: false,
+        thanksRead: false,
       },
     });
 
@@ -255,6 +264,8 @@ import {
         s.moodfulReboot.moodfulRebooted = parsed.moodfulReboot.moodfulRebooted === true;
         if (isObject(parsed.fantasyScoreFix)) {
           s.fantasyScoreFix.postRead = parsed.fantasyScoreFix.postRead === true;
+          s.fantasyScoreFix.memoryInjected = parsed.fantasyScoreFix.memoryInjected === true;
+          s.fantasyScoreFix.thanksRead = parsed.fantasyScoreFix.thanksRead === true;
         }
         return s;
       } catch {
@@ -291,13 +302,15 @@ import {
       }
 
       const f = q.fantasyScoreFix;
-      if (f?.postRead) {
+      // Quest appears after the post is read; once complete it moves to DONE.md and no longer appears here.
+      const fantasyComplete = !!(f?.postRead && f?.memoryInjected && f?.thanksRead);
+      if (f?.postRead && !fantasyComplete) {
         sections.push([
           '## Quest: Fantasy football — score correction',
           `- ${box(true)} Read the post on Neon-City`,
-          `- ${box(false)} Connect to \`fantasy-football-league.com\` via ssh`,
-          `- ${box(false)} Find the score file for last week`,
-          `- ${box(false)} Change only \`66\` → \`69\` (no other edits)`,
+          `- ${box(!!f.memoryInjected)} Patch volatile score memory (\`memcorrupt <pid>\`)`,
+          `- ${box(!!f.thanksRead)} Read the follow-up on Neon-City`,
+          '',
           '',
         ].join('\n'));
       }
@@ -313,17 +326,36 @@ import {
       const q = loadQuestState();
       const m = q.moodfulReboot;
       const complete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
-      if (!complete) {
+      const f = q.fantasyScoreFix;
+      const fantasyComplete = !!(f?.postRead && f?.memoryInjected && f?.thanksRead);
+
+      if (!complete && !fantasyComplete) {
         return ['# DONE', '', 'Nothing completed yet.', ''].join('\n');
       }
 
-      return [
-        '# DONE',
-        '',
-        '## Quest: Moodful — reboot request',
-        '- Completed: Rebooted moodful.ca after ops request',
-        '',
-      ].join('\n');
+      const sections = ['# DONE', ''];
+
+      if (complete) {
+        sections.push(
+          [
+            '## Quest: Moodful — reboot request',
+            '- Completed: Rebooted moodful.ca after ops request',
+            '',
+          ].join('\n')
+        );
+      }
+
+      if (fantasyComplete) {
+        sections.push(
+          [
+            '## Quest: Fantasy football — score correction',
+            '- Completed: Patched volatile score memory (66 → 69)',
+            '',
+          ].join('\n')
+        );
+      }
+
+      return sections.join('\n');
     };
 
     // Load initial state
@@ -852,7 +884,7 @@ import {
       line(`get: saved '${name}' -> ${dest}`, 'ok');
     };
 
-    const cmdMemcorrupt = (arg) => {
+    const cmdMemcorrupt = async (arg) => {
       if (!isBinaryInstalled(localStorage, { host: sessionHost, user: sessionUser, name: 'memcorrupt' })) {
         line('memcorrupt: not installed. run: get memcorrupt', 'err');
         return;
@@ -878,7 +910,114 @@ import {
         return;
       }
 
-      line('trying', 'ok');
+      const q = loadQuestState();
+      if (!q?.fantasyScoreFix?.postRead) {
+        line('memcorrupt: no active memory injection target', 'err');
+        line('Memory corruption failed', 'err');
+        return;
+      }
+
+      if (sessionHost !== 'fantasy-football-league.com') {
+        line('memcorrupt: no injectable region on this host', 'err');
+        line('Memory corruption failed', 'err');
+        return;
+      }
+
+      const target = (procs || []).find((p) => String(p?.command || '').includes('/srv/ffl/server.mjs'));
+      const targetPid = Number(target?.pid);
+      if (!Number.isInteger(targetPid) || targetPid <= 0) {
+        line('memcorrupt: target service not found', 'err');
+        line('Memory corruption failed', 'err');
+        return;
+      }
+
+      if (pid !== targetPid) {
+        line('Memory corruption failed', 'err');
+        line('[!] ACCESS DENIED', 'err');
+        return;
+      }
+
+      if (isProcessCorrupted(localStorage, { host: sessionHost, pid })) {
+        line(`memcorrupt: PID ${pid} already corrupted`, 'err');
+        return;
+      }
+
+      line('target locked. arming injector...', 'ok');
+
+      // Block terminal input while modal is running.
+      input.disabled = true;
+      setChip('memcorrupt: armed');
+      try {
+        const beforeText = [
+          'WEEK=LAST',
+          'TEAM=NEON_RACCOONS',
+          'SCORE=66',
+          'OPPONENT_SCORE=67',
+          '',
+        ].join('\n');
+        const afterText = [
+          'WEEK=LAST',
+          'TEAM=NEON_RACCOONS',
+          'SCORE=69',
+          'OPPONENT_SCORE=67',
+          '',
+        ].join('\n');
+
+        const result = await openMemoryInjectionGame({
+          timeLimitSeconds: 25,
+          pairCount: 3,
+          beforeText,
+          afterText,
+        });
+
+        if (result?.reason === 'abort') {
+          line('[!] ABORTED', 'err');
+          return;
+        }
+
+        if (result?.win) {
+          markProcessCorrupted(localStorage, { host: sessionHost, pid });
+
+          const next = loadQuestState();
+          if (next?.fantasyScoreFix && !next.fantasyScoreFix.memoryInjected) {
+            next.fantasyScoreFix.memoryInjected = true;
+            saveQuestState(next);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+
+          // BBS follow-up: add a “thanks” reply after successful injection.
+          appendBbsPostIfMissing({
+            groupId: BBS_GROUP_ID,
+            post: {
+              id: 'neon_missions_fantasy_score_quietly_thanks_v1',
+              title: "RE: Change last week’s score quietly",
+              date: new Date().toISOString(),
+              body: [
+                'Update:',
+                '',
+                'Whoever pulled this off — thank you.',
+                'Scoreboard looks normal again. No extra noise.',
+                '',
+                '-p',
+              ].join('\n'),
+            },
+          });
+
+          line('Memory corruption successful', 'ok');
+          return;
+        }
+
+        line('Memory corruption failed', 'err');
+        if (result?.reason === 'timeout') {
+          line('[!] TIMEOUT', 'err');
+        } else {
+          line('[!] PROCESS ERROR', 'err');
+        }
+      } finally {
+        input.disabled = false;
+        setChip('type: help');
+        try { input.focus(); } catch {}
+      }
     };
 
     const extractCredsFromMailLines = (lines) => {
@@ -1041,6 +1180,36 @@ import {
       line("Select post number or type 'exit':", 'ok');
     };
 
+    const appendBbsPostIfMissing = ({ groupId, post }) => {
+      try {
+        const gid = String(groupId || '').trim();
+        const p = post && typeof post === 'object' ? post : null;
+        const id = String(p?.id || '').trim();
+        if (!gid || !id) return { ok: false, changed: false };
+
+        const state = loadBbsState(localStorage);
+        if (!state.groups) state.groups = {};
+        if (!state.groups[gid]) state.groups[gid] = { posts: [] };
+        if (!Array.isArray(state.groups[gid].posts)) state.groups[gid].posts = [];
+
+        const exists = state.groups[gid].posts.some((x) => x && x.id === id);
+        if (exists) return { ok: true, changed: false };
+
+        state.groups[gid].posts.push({
+          id,
+          title: String(p.title || '(no title)'),
+          date: String(p.date || new Date().toISOString()),
+          body: String(p.body || ''),
+          status: p.status === 'read' ? 'read' : 'unread',
+        });
+        saveBbsState(localStorage, state);
+        return { ok: true, changed: true };
+      } catch (e) {
+        console.warn('Failed to append BBS post:', e);
+        return { ok: false, changed: false };
+      }
+    };
+
     const cmdBbs = () => {
       if (sessionHost !== ARCADE_HOST) {
         line('bbs: not installed on this host', 'err');
@@ -1100,13 +1269,27 @@ import {
         if (sessionHost === ARCADE_HOST && post.id === BBS_MISSION_POST_ID) {
           const q = loadQuestState();
           if (!q.fantasyScoreFix?.postRead) {
-            q.fantasyScoreFix = { postRead: true };
+            q.fantasyScoreFix.postRead = true;
             saveQuestState(q);
             line('quest: updated /home/rg/TODO.md', 'ok');
           }
         }
       } catch (e) {
         console.warn('Failed to record BBS quest read event:', e);
+      }
+
+      // Quest hook: reading the follow-up “thanks” post completes the fantasy mission (moves TODO -> DONE).
+      try {
+        if (sessionHost === ARCADE_HOST && post.id === BBS_MISSION_THANKS_POST_ID) {
+          const q = loadQuestState();
+          if (q?.fantasyScoreFix && !q.fantasyScoreFix.thanksRead) {
+            q.fantasyScoreFix.thanksRead = true;
+            saveQuestState(q);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record BBS follow-up read event:', e);
       }
 
       // After reading a post, disconnect and return to shell so the message remains visible.
@@ -1167,6 +1350,8 @@ import {
         STORAGE_KEY_DECRYPTED,
         // installed binaries
         STORAGE_KEY_BIN,
+        // memcorrupt state
+        TERMINAL_MEMCORRUPT_STORAGE_KEY,
         // ssh return frame
         STORAGE_KEY_SSH_RETURN,
         // terminal session + boot state
@@ -1515,7 +1700,7 @@ import {
           cmdGet(arg);
           break;
         case 'memcorrupt':
-          cmdMemcorrupt(arg);
+          await cmdMemcorrupt(arg);
           break;
         case 'mail':
           cmdMail(arg);
@@ -1659,6 +1844,7 @@ import {
       if (e.key === 'Escape') {
         // If a blocking modal is open above the terminal, do not close the terminal.
         if (document.body.classList.contains('decrypt-open')) return;
+        if (document.body.classList.contains('meminject-open')) return;
         e.preventDefault();
         close();
       }

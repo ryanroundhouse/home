@@ -38,7 +38,7 @@
 - **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
 - **Reboot**: `reboot` runs a short countdown; on `arcade` it closes the terminal, and on ssh hosts it drops you back to the prior session.
 - **Processes**: `ps` shows pretend processes on the current host (always your `-bash`; fantasy-football-league.com also runs a webserver service with a PID).
-- **Installable binaries**: `get <name>` installs binaries into `~/bin` for the current `user@host` (persists in localStorage `rg_terminal_bin_v1`). Currently available: `memcorrupt` (prompts for PID and validates against `ps`).
+- **Installable binaries**: `get <name>` installs binaries into `~/bin` for the current `user@host` (persists in localStorage `rg_terminal_bin_v1`). Currently available: `memcorrupt` (on the fantasy-football quest, running `memcorrupt <pid>` on the service PID triggers the “Memory Injection” matching minigame; on success it appends a “thanks” reply to the Neon-City BBS thread, and **reading the follow-up completes the mission**. Injection is one-time per PID, persisted in localStorage `rg_terminal_memcorrupt_v1`).
 - **Quests**: `cat /home/rg/TODO.md` shows active quest progress and `cat /home/rg/DONE.md` shows completed quests (activated by reading the Moodful reboot-request email; completing the Moodful reboot unlocks a thank-you email).
 - **Encrypted files**: certain files have `encrypted: true` in the embedded filesystem; `cat` prints corrupted ASCII until you successfully run `decrypt <file>` (timing-bar minigame) to unlock plaintext (persists in localStorage).
 - **Permissions**: `cd`/`ls`/`cat` enforce embedded UNIX-style `permissions` (with `root` bypass), so protected directories like `fantasy-football-league.com:/fantasy-football-scores` are inaccessible to non-root users.
@@ -60,6 +60,8 @@
 ├── package.json
 ├── lib/
 │   ├── slugify.js
+│   ├── memoryInjectionDiff.js
+│   ├── memoryInjectionGame.js
 │   ├── terminalFormat.js
 │   ├── terminalPaths.js
 │   ├── terminalPermissions.js
@@ -70,6 +72,7 @@
 │   ├── terminalMailData.js
 │   ├── terminalBbs.js
 │   ├── terminalBbsData.js
+│   ├── terminalMemcorrupt.js
 │   ├── terminalVault.js
 │   └── timingBarGame.js
 ├── index.html
@@ -86,8 +89,10 @@
 │       └── lib/
 └── tests/
     ├── slugify.test.js
+    ├── memoryInjectionDiff.test.js
     ├── terminalMail.test.js
     ├── terminalBbs.test.js
+    ├── terminalMemcorrupt.test.js
     ├── terminalFilesystemHosts.test.js
     ├── terminalFormat.test.js
     ├── terminalPaths.test.js
