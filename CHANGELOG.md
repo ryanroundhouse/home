@@ -1,6 +1,11 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-23**: Added extra spacing when reading a BBS post (menu/subject/body) for readability.
+- **2025-12-23**: BBS now disconnects after reading a post so the full message remains visible.
+- **2025-12-23**: Fixed Neon-City BBS banner text (spelling).
+- **2025-12-23**: Added `bbs` (Neon-City) to the terminal. Includes a seeded `neon.missions` group with one post, persistent read/unread state, vault credential capture from post content, and TODO.md quest activation on read.
+- **2025-12-23**: Added simulated host `fantasy-football-league.com` for ssh (parker/sundaypaper) and a minimal host filesystem.
 - **2025-12-23**: Made `~/vault.txt` a dynamic credentials ledger. Reading emails that contain `Host/User/Pass` stores credentials in localStorage and prints a “credentials stored” hint; `cat` of a decrypted `vault.txt` renders the stored credentials; `rm -rf /` wipes vault state.
 - **2025-12-23**: Added vault module + tests (`lib/terminalVault.js`, `tests/terminalVault.test.js`).
 - **2025-12-23**: Added encrypted files + `decrypt <file>` command. Encrypted files `cat` as corrupted ASCII until unlocked via a timing-bar minigame modal; successful decrypt persists in localStorage and `rm -rf /` now wipes decrypt state too.

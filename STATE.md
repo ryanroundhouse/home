@@ -33,6 +33,7 @@
 
 ## In-browser terminal (current capabilities)
 - **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to prior session (simulated; no networking).
+- **BBS**: `bbs` connects to Neon-City (text-only). Reading a post marks it read, stores any `Host/User/Pass` credentials in `~/vault.txt`, and can activate quest tracking in `/home/rg/TODO.md`.
 - **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
 - **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
 - **Reboot**: `reboot` runs a short countdown; on `arcade` it closes the terminal, and on ssh hosts it drops you back to the prior session.
@@ -62,6 +63,8 @@
 │   ├── terminalSsh.js
 │   ├── terminalMail.js
 │   ├── terminalMailData.js
+│   ├── terminalBbs.js
+│   ├── terminalBbsData.js
 │   ├── terminalVault.js
 │   └── timingBarGame.js
 ├── index.html
@@ -79,6 +82,7 @@
 └── tests/
     ├── slugify.test.js
     ├── terminalMail.test.js
+    ├── terminalBbs.test.js
     ├── terminalFilesystemHosts.test.js
     ├── terminalFormat.test.js
     ├── terminalPaths.test.js

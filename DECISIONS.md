@@ -133,6 +133,24 @@
   - The embedded filesystem’s `vault.txt` content becomes a placeholder; displayed content is derived from localStorage once decrypted.
   - Future credential sources should follow the same pattern: event hook in `terminal.js` → `lib/terminalVault.js` persistence → dynamic `cat` rendering.
 
+### ADR-0008 — Neon-City BBS (`bbs`) is catalog-driven + persisted + event-hooked
+- **Status**: Accepted
+- **Date**: 2025-12-23
+- **Context**: We want an offline, text-only BBS experience (Usenet/newsreader vibe) accessible via a single `bbs` command, with persistent read/unread state and the ability for “reading” to advance terminal state (vault + quests) without any network calls.
+- **Decision**:
+  - Store seed BBS content in a consolidated catalog file: `lib/terminalBbsData.js` (shape: `{ groups: { [groupId]: posts[] } }`).
+  - Persist read/unread status in localStorage under a versioned key: `rg_terminal_bbs_v1`, merging by post `id` (append-only; never overwrite read state).
+  - Implement BBS logic as a pure, Node-testable module: `lib/terminalBbs.js` (callers inject storage).
+  - Implement the interactive BBS prompt as a small terminal “mode” in `terminal.js` (similar to the ssh password flow) so inputs are interpreted as BBS selections until the user types `exit`.
+  - Hook “read post” events in `terminal.js` to:
+    - record credentials to the vault when content contains `Host/User/Pass`
+    - activate a new section in `/home/rg/TODO.md` for mission tracking
+  - Include `rg_terminal_bbs_v1` in the `rm -rf /` wipe list to preserve reset correctness.
+- **Consequences**:
+  - BBS content can be expanded by editing the catalog without breaking existing user state.
+  - “Progress” can be driven by reading alone, consistent with the mail/quest patterns.
+  - No frontend deps and no network calls are required.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

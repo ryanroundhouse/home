@@ -19,6 +19,7 @@ test('parseSshTarget: rejects invalid inputs', () => {
 test('resolveSshHost: resolves only known simulated hosts', () => {
   assert.equal(resolveSshHost('moodful.ca'), 'moodful.ca');
   assert.equal(resolveSshHost('MOODFUL.CA'), 'moodful.ca');
+  assert.equal(resolveSshHost('fantasy-football-league.com'), 'fantasy-football-league.com');
   assert.equal(resolveSshHost('unknown.example'), null);
 });
 
@@ -26,6 +27,13 @@ test('checkSshPassword: authenticates moodful.ca root/wow', () => {
   assert.deepEqual(
     checkSshPassword({ host: 'moodful.ca', user: 'root', password: 'wow' }),
     { ok: true, host: 'moodful.ca', user: 'root', homeDir: '/home/root' }
+  );
+});
+
+test('checkSshPassword: authenticates fantasy-football-league.com parker/sundaypaper', () => {
+  assert.deepEqual(
+    checkSshPassword({ host: 'fantasy-football-league.com', user: 'parker', password: 'sundaypaper' }),
+    { ok: true, host: 'fantasy-football-league.com', user: 'parker', homeDir: '/home/parker' }
   );
 });
 

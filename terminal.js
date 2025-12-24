@@ -11,6 +11,7 @@ import { normalizePath, resolvePath } from './lib/terminalPaths.js';
 import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from './lib/terminalFilesystem.js';
 import { parseSshTarget, checkSshPassword, resolveSshHost } from './lib/terminalSsh.js';
 import { listInbox, readMessage, mailUsageLines, unlockMailByKey } from './lib/terminalMail.js';
+import { listGroup, readPost, TERMINAL_BBS_STORAGE_KEY } from './lib/terminalBbs.js';
 import {
   addCredential,
   loadVaultState,
@@ -74,6 +75,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     let rebootInProgress = false;
     let rebootIntervalId = null;
     let pendingConfirm = null; // { kind: 'rmrf_root' }
+    let pendingBbs = null; // { groupId }
 
     // LocalStorage keys
     const STORAGE_KEY_HISTORY = 'rg_terminal_history';
@@ -88,6 +90,8 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
 
     const QUESTS_VERSION = 1;
     const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
+    const BBS_GROUP_ID = 'neon.missions';
+    const BBS_MISSION_POST_ID = 'neon_missions_fantasy_score_quietly_v1';
 
     // Load from localStorage
     const loadFromStorage = () => {
@@ -154,6 +158,9 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         rebootEmailRead: false,
         moodfulRebooted: false,
       },
+      fantasyScoreFix: {
+        postRead: false,
+      },
     });
 
     const isObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -170,6 +177,9 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         s.moodfulReboot.sshRootFirst = parsed.moodfulReboot.sshRootFirst === true;
         s.moodfulReboot.rebootEmailRead = parsed.moodfulReboot.rebootEmailRead === true;
         s.moodfulReboot.moodfulRebooted = parsed.moodfulReboot.moodfulRebooted === true;
+        if (isObject(parsed.fantasyScoreFix)) {
+          s.fantasyScoreFix.postRead = parsed.fantasyScoreFix.postRead === true;
+        }
         return s;
       } catch {
         return defaultQuestState();
@@ -187,23 +197,40 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
     const renderTodoMd = () => {
       const q = loadQuestState();
       const m = q.moodfulReboot;
+      const box = (done) => (done ? '[x]' : '[ ]');
+
+      const sections = [];
+
       // Quest only appears after the reboot-request email is read.
       // Once complete, it moves to DONE.md and no longer appears here.
-      const complete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
-      if (!m.rebootEmailRead || complete) {
+      const moodfulComplete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
+      if (m.rebootEmailRead && !moodfulComplete) {
+        sections.push([
+          '## Quest: Moodful — reboot request',
+          `- ${box(m.sshRootFirst)} First successful ssh: \`ssh root@moodful.ca\``,
+          `- ${box(m.rebootEmailRead)} Read the ops email requesting a reboot`,
+          `- ${box(m.moodfulRebooted)} Reboot moodful.ca (\`reboot\` while ssh’d in)`,
+          '',
+        ].join('\n'));
+      }
+
+      const f = q.fantasyScoreFix;
+      if (f?.postRead) {
+        sections.push([
+          '## Quest: Fantasy football — score correction',
+          `- ${box(true)} Read the post on Neon-City`,
+          `- ${box(false)} Connect to \`fantasy-football-league.com\` via ssh`,
+          `- ${box(false)} Find the score file for last week`,
+          `- ${box(false)} Change only \`66\` → \`69\` (no other edits)`,
+          '',
+        ].join('\n'));
+      }
+
+      if (sections.length === 0) {
         return ['# TODO', '', 'No active quests.', ''].join('\n');
       }
 
-      const box = (done) => (done ? '[x]' : '[ ]');
-      return [
-        '# TODO',
-        '',
-        '## Quest: Moodful — reboot request',
-        `- ${box(m.sshRootFirst)} First successful ssh: \`ssh root@moodful.ca\``,
-        `- ${box(m.rebootEmailRead)} Read the ops email requesting a reboot`,
-        `- ${box(m.moodfulRebooted)} Reboot moodful.ca (\`reboot\` while ssh’d in)`,
-        '',
-      ].join('\n');
+      return ['# TODO', '', ...sections].join('\n');
     };
 
     const renderDoneMd = () => {
@@ -417,6 +444,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       line('  decrypt <file> - timing exploit to unlock an encrypted file', 'ok');
       line('  pwd         - print working directory', 'ok');
       line('  mail        - check mailbox (simulated)', 'ok');
+      line('  bbs         - connect to Neon-City (simulated)', 'ok');
       line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
       line('  exit        - exit ssh session (back to arcade)', 'ok');
       line('  reboot      - reboot current host (simulated)', 'ok');
@@ -634,6 +662,30 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       return { host, user, ...(password ? { password } : {}) };
     };
 
+    const extractCredsFromText = (text) => {
+      const scanLines = String(text || '').split('\n');
+
+      let host = '';
+      let user = '';
+      let password = '';
+
+      for (const raw of scanLines) {
+        const lineText = String(raw ?? '');
+
+        const hostMatch = lineText.match(/^\s*(host|server)\s*:\s*(.+?)\s*$/i);
+        if (hostMatch && !host) host = String(hostMatch[2] || '').trim();
+
+        const userMatch = lineText.match(/^\s*(user|username)\s*:\s*(.+?)\s*$/i);
+        if (userMatch && !user) user = String(userMatch[2] || '').trim();
+
+        const passMatch = lineText.match(/^\s*(pass|password)\s*:\s*(.+?)\s*$/i);
+        if (passMatch && !password) password = String(passMatch[2] || '').trim();
+      }
+
+      if (!host || !user) return null;
+      return { host, user, ...(password ? { password } : {}) };
+    };
+
     const cmdMail = (arg) => {
       const a = String(arg || '').trim();
       if (!a) {
@@ -701,6 +753,121 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       }
     };
 
+    const endPendingBbs = () => {
+      pendingBbs = null;
+      input.type = 'text';
+    };
+
+    const beginPendingBbs = ({ groupId }) => {
+      pendingBbs = { groupId };
+      input.type = 'text';
+      input.value = '';
+    };
+
+    const bbsBannerLines = () => ([
+      ' .--------------------------------. ',
+      ' |          Neon-City             | ',
+      ' |        neon.missions           | ',
+      ' \'--------------------------------\' ',
+    ]);
+
+    const renderBbsList = () => {
+      for (const l of bbsBannerLines()) line(l, 'ok');
+      line('Connected.', 'ok');
+      line('Loading groups...', 'ok');
+      line('', 'ok');
+      line(`Group: ${BBS_GROUP_ID}`, 'ok');
+      line('', 'ok');
+
+      const res = listGroup(localStorage, { groupId: BBS_GROUP_ID });
+      if (!res.ok) {
+        line('BBS: failed to load group.', 'err');
+        return;
+      }
+
+      for (const p of res.posts) {
+        const tag = p.status === 'unread' ? '(NEW)' : '     ';
+        line(`[${p.index}] ${tag} ${p.title}`, 'ok');
+      }
+
+      line('', 'ok');
+      line("Select post number or type 'exit':", 'ok');
+    };
+
+    const cmdBbs = () => {
+      if (sessionHost !== ARCADE_HOST) {
+        line('bbs: not installed on this host', 'err');
+        return;
+      }
+      beginPendingBbs({ groupId: BBS_GROUP_ID });
+      renderBbsList();
+    };
+
+    const handleBbsInput = (raw) => {
+      const text = String(raw ?? '').trim();
+      const groupId = pendingBbs?.groupId || BBS_GROUP_ID;
+
+      if (text.toLowerCase() === 'exit') {
+        line('Disconnecting from Neon-City…', 'ok');
+        endPendingBbs();
+        return;
+      }
+
+      const n = Number(text);
+      if (!Number.isInteger(n) || n <= 0) {
+        line('Invalid selection.', 'err');
+        line("Select post number or type 'exit':", 'ok');
+        return;
+      }
+
+      const post = readPost(localStorage, { groupId, index: n });
+      if (!post.ok) {
+        line(`BBS: ${post.error}`, 'err');
+        line("Select post number or type 'exit':", 'ok');
+        return;
+      }
+
+      line('', 'ok');
+      line('', 'ok');
+      line(`Subject: ${post.title}`, 'ok');
+      line('', 'ok');
+      line('', 'ok');
+      for (const l of String(post.body || '').split('\n')) line(l, 'ok');
+      line('', 'ok');
+
+      // Vault hook: store credentials when post contains Host/User/(Pass).
+      try {
+        const creds = extractCredsFromText(post.body);
+        if (creds) {
+          const stored = addCredential(localStorage, creds);
+          if (stored.ok && stored.changed) {
+            line('credentials stored in ~/vault.txt', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record vault credentials from BBS:', e);
+      }
+
+      // Quest hook: reading the mission post activates TODO.md section.
+      try {
+        if (sessionHost === ARCADE_HOST && post.id === BBS_MISSION_POST_ID) {
+          const q = loadQuestState();
+          if (!q.fantasyScoreFix?.postRead) {
+            q.fantasyScoreFix = { postRead: true };
+            saveQuestState(q);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record BBS quest read event:', e);
+      }
+
+      // After reading a post, disconnect and return to shell so the message remains visible.
+      line('', 'ok');
+      line('Disconnecting from Neon-City…', 'ok');
+      endPendingBbs();
+    };
+
     const printProjects = () => {
       lineHTML(
         `Featured projects:
@@ -745,6 +912,8 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         STORAGE_KEY_QUESTS,
         // vault credentials
         TERMINAL_VAULT_STORAGE_KEY,
+        // bbs
+        TERMINAL_BBS_STORAGE_KEY,
         // mail
         'rg_terminal_mail_v1',
         // decrypt state
@@ -770,6 +939,7 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
       currentDir = ARCADE_HOME_DIR;
       sshReturnFrame = null;
       pendingSsh = null;
+      endPendingBbs();
       endPendingConfirm();
 
       history = [];
@@ -1003,6 +1173,10 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
         handleSshPassword(raw);
         return;
       }
+      if (pendingBbs) {
+        handleBbsInput(raw);
+        return;
+      }
 
       const text = normalize(raw);
       if (!text) return;
@@ -1082,6 +1256,9 @@ import { playTimingBarGame } from './lib/timingBarGame.js';
           break;
         case 'mail':
           cmdMail(arg);
+          break;
+        case 'bbs':
+          cmdBbs();
           break;
         case 'ssh': {
           if (!arg) {

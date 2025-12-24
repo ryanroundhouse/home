@@ -10,6 +10,7 @@ test('multi-host filesystem: can switch active host and resolve paths accordingl
   assert.equal(getNode('/user'), null, 'arcade should not have /user');
   assert.ok(getNode('/usr/bin/reboot'), 'arcade has /usr/bin/reboot');
   assert.ok(getNode('/usr/bin/rm'), 'arcade has /usr/bin/rm');
+  assert.ok(getNode('/usr/bin/bbs'), 'arcade has /usr/bin/bbs');
   assert.ok(getNode('/home/rg/TODO.md'), 'arcade has /home/rg/TODO.md');
   assert.ok(getNode('/home/rg/DONE.md'), 'arcade has /home/rg/DONE.md');
   assert.ok(getNode('/home/rg/bin/decrypt'), 'arcade has /home/rg/bin/decrypt');
@@ -21,6 +22,12 @@ test('multi-host filesystem: can switch active host and resolve paths accordingl
   assert.equal(getNode('/user'), null, 'moodful.ca should not have /user');
   assert.ok(getNode('/usr/bin/reboot'), 'moodful.ca has /usr/bin/reboot');
   assert.ok(getNode('/usr/bin/rm'), 'moodful.ca has /usr/bin/rm');
+
+  assert.equal(setActiveHost('fantasy-football-league.com'), true);
+  assert.equal(getActiveHost(), 'fantasy-football-league.com');
+  assert.ok(getNode('/home/parker'), 'fantasy-football-league.com has /home/parker');
+  assert.ok(getNode('/usr/bin/reboot'), 'fantasy-football-league.com has /usr/bin/reboot');
+  assert.ok(getNode('/usr/bin/rm'), 'fantasy-football-league.com has /usr/bin/rm');
 
   assert.equal(setActiveHost('arcade'), true);
   assert.equal(getActiveHost(), 'arcade');
