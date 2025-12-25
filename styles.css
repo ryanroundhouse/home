@@ -1407,7 +1407,8 @@ textarea{ min-height: 140px; resize: vertical; }
 }
 
 .meminject-left-feed{
-  flex: 1;
+  /* Keep the feed ~half height; memory map gets the rest */
+  flex: 0 0 44%;
   min-height: 0;
   overflow: auto;
   padding: 10px;
@@ -1423,10 +1424,75 @@ textarea{ min-height: 140px; resize: vertical; }
   opacity: .96;
 }
 
-.meminject-left-map{
+.meminject-left-timer{
   border-top: 1px solid rgba(120, 106, 255, .14);
+  border-bottom: 1px solid rgba(120, 106, 255, .14);
+  padding: 10px;
+  background: linear-gradient(90deg, rgba(66,231,255,.06), rgba(255,61,242,.05));
+}
+
+.meminject-left-timer-label{
+  font-family: var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: rgba(66,231,255,.86);
+}
+
+.meminject-left-timer-row{
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.meminject-left-timer-value{
+  font-family: var(--font-arcade);
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: .10em;
+  color: rgba(255, 219, 252, .96);
+  text-shadow:
+    0 0 20px rgba(255,61,242,.18),
+    1px 0 0 rgba(66,231,255,.18),
+    -1px 0 0 rgba(255,61,242,.14);
+  font-variant-numeric: tabular-nums;
+}
+
+.meminject-left-timer-units{
+  font-family: var(--font-mono);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: rgba(211, 255, 231, .86);
+  opacity: .9;
+}
+
+.meminject-left-timer-bar{
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(66,231,255,.18);
+  background:
+    linear-gradient(90deg, rgba(66,231,255,.06), rgba(255,61,242,.05)),
+    rgba(0,0,0,.22);
+  box-shadow: inset 0 0 0 1px rgba(255,61,242,.08);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.meminject-left-timer-bar-fill{
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(84,255,154,.20), rgba(84,255,154,.85));
+  transition: width 140ms linear;
+}
+
+.meminject-left-map{
+  /* Timer supplies the divider; keep this clean */
   padding: 10px;
   background: rgba(0,0,0,.18);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .meminject-left-map-head{
@@ -1439,8 +1505,8 @@ textarea{ min-height: 140px; resize: vertical; }
 
 .meminject-left-map-body{
   margin: 8px 0 0;
-  max-height: 160px;
-  overflow: hidden;
+  max-height: none;
+  overflow: auto;
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.35;
@@ -1543,6 +1609,9 @@ textarea{ min-height: 140px; resize: vertical; }
 .meminject-card-backmark{
   opacity: .72;
   letter-spacing: .20em;
+}
+.meminject-card.is-flipped .meminject-card-backmark{
+  opacity: 0;
 }
 .meminject-card-front{
   transform: rotateY(180deg);
