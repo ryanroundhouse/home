@@ -33,6 +33,7 @@
 
 ## In-browser terminal (current capabilities)
 - **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to `rg@arcade` (simulated; no networking). The ssh return context persists in localStorage so refresh won’t strand you on a remote host.
+- **Themes**: `themes` lists and selects from 12 site-wide themes (by number or name). Selection persists in localStorage and applies to the whole site on refresh.
 - **BBS**: `bbs` connects to Neon-City (text-only). Reading a post marks it read, stores any `Host/User/Pass` credentials in `~/vault.txt`, and can activate quest tracking in `/home/rg/TODO.md`.
 - **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
 - **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
@@ -42,7 +43,7 @@
 - **Quests**: `cat /home/rg/TODO.md` shows active quest progress and `cat /home/rg/DONE.md` shows completed quests (activated by reading the Moodful reboot-request email; completing the Moodful reboot unlocks a thank-you email).
 - **Encrypted files**: certain files have `encrypted: true` in the embedded filesystem; `cat` prints corrupted ASCII until you successfully run `decrypt <file>` (timing-bar minigame) to unlock plaintext (persists in localStorage).
 - **Permissions**: `cd`/`ls`/`cat` enforce embedded UNIX-style `permissions` (with `root` bypass), so protected directories like `fantasy-football-league.com:/fantasy-football-scores` are inaccessible to non-root users.
-- **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session, decrypt unlocks) so you can start fresh.
+- **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session, decrypt unlocks, theme selection) so you can start fresh.
 - **Vault**: `~/vault.txt` is an encrypted “special file”. After decrypting it, `cat ~/vault.txt` shows a dynamic ledger of stored credentials learned from emails (persisted in localStorage). `rm -rf /` wipes vault state too.
 
 ## Current file tree (top-level)
@@ -73,6 +74,7 @@
 │   ├── terminalBbs.js
 │   ├── terminalBbsData.js
 │   ├── terminalMemcorrupt.js
+│   ├── terminalThemes.js
 │   ├── terminalVault.js
 │   └── timingBarGame.js
 ├── index.html
@@ -90,6 +92,7 @@
 └── tests/
     ├── slugify.test.js
     ├── memoryInjectionDiff.test.js
+    ├── terminalThemes.test.js
     ├── terminalMail.test.js
     ├── terminalBbs.test.js
     ├── terminalMemcorrupt.test.js

@@ -6,6 +6,8 @@
   - Contact form: local-only (queue toast + clipboard fallback)
 */
 
+import { DEFAULT_THEME_ID, getThemeById, TERMINAL_THEME_STORAGE_KEY } from './lib/terminalThemes.js';
+
 (() => {
   'use strict';
 
@@ -13,6 +15,23 @@
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+
+  /* -----------------------------
+   * Theme (site-wide; driven by terminal)
+   * ---------------------------*/
+  const applyThemeFromStorage = () => {
+    try {
+      const raw = localStorage.getItem(TERMINAL_THEME_STORAGE_KEY);
+      const savedId = (raw || '').trim();
+      const theme = savedId ? getThemeById(savedId) : null;
+      const id = theme?.id || DEFAULT_THEME_ID;
+      if (id === DEFAULT_THEME_ID) document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.dataset.theme = id;
+    } catch {
+      // Best-effort: if storage is blocked, keep default theme.
+      document.documentElement.removeAttribute('data-theme');
+    }
+  };
 
   /* -----------------------------
    * Active nav state (aria-current)
@@ -242,6 +261,7 @@ ${message}
    * Boot
    * ---------------------------*/
   document.addEventListener('DOMContentLoaded', () => {
+    applyThemeFromStorage();
     setActiveNav();
     initMobileNav();
     initParallax();

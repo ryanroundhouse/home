@@ -186,6 +186,20 @@
   - Installs persist across refreshes and are reset by `rm -rf /`.
   - `~/bin` can now be used for future puzzles without adding network calls or runtime deps.
 
+### ADR-0012 — Site-wide theme selection via terminal (`themes`) + CSS variables
+- **Status**: Accepted
+- **Date**: 2025-12-25
+- **Context**: We want multiple popular terminal-inspired themes for the in-browser terminal, and the user wants them to apply site-wide, persist across sessions, and reset back to the current dark default on `rm -rf /`.
+- **Decision**:
+  - Add a small shared theme registry module: `lib/terminalThemes.js` (theme ids + labels + selection parsing).
+  - Apply the active theme by setting `document.documentElement.dataset.theme = <id>` (or removing the attribute for default).
+  - Implement `themes` in `terminal.js` to list/select/reset themes and persist selection in localStorage (`rg_terminal_theme_v1`).
+  - On page load, `script.js` reads localStorage and reapplies the theme so refreshes keep the selection.
+  - Include the theme key in the explicit `rm -rf /` wipe list so reset restores the default theme immediately.
+- **Consequences**:
+  - Themes remain fully offline (no deps, no network calls) and are controlled from within the terminal.
+  - The site’s look can be changed without a build step by using existing CSS variables and `data-theme` overrides.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

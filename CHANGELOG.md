@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-25**: Added **12 site-wide themes** inspired by popular terminal palettes, selectable via the new `themes` command in the in-browser terminal. Selection persists in localStorage and resets to the default dark theme on `rm -rf /`.
 - **2025-12-24**: Added `get` + installable binaries with a localStorage-backed `~/bin` overlay (per user@host). `get memcorrupt` installs `memcorrupt` with download-like output; `memcorrupt <pid>` now gates on the fantasy-football quest and launches the “Memory Injection” minigame on the correct service PID.
 - **2025-12-24**: Implemented the “Memory Injection” minigame modal overlay (card matching under timer + CRT activity feed) plus a win cinematic that highlights a single-value diff (e.g. `66 → 69`) with a contracting reticle and animates injecting a patch into volatile memory. Successful injection is one-time per PID and persisted in localStorage.
 - **2025-12-24**: Expanded the Neon-City BBS mission post into a short in-post “thread” (helpful but vague advice + parker confusion). After successful memory injection, a new “thanks” reply is appended to the BBS group; reading that follow-up completes the mission (moves it from TODO.md to DONE.md).

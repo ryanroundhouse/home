@@ -33,6 +33,13 @@ import {
   markProcessCorrupted,
   TERMINAL_MEMCORRUPT_STORAGE_KEY,
 } from './lib/terminalMemcorrupt.js';
+import {
+  DEFAULT_THEME_ID,
+  getThemeById,
+  resolveThemeSelection,
+  TERMINAL_THEME_STORAGE_KEY,
+  THEMES,
+} from './lib/terminalThemes.js';
 
 (() => {
   'use strict';
@@ -537,13 +544,74 @@ import {
       else startMatrix();
     };
 
+    /* -----------------------------
+     * Themes (site-wide; driven by terminal)
+     * ---------------------------*/
+    const loadThemeId = () => {
+      try {
+        const raw = localStorage.getItem(TERMINAL_THEME_STORAGE_KEY);
+        const id = (raw || '').trim();
+        return (getThemeById(id)?.id) || DEFAULT_THEME_ID;
+      } catch {
+        return DEFAULT_THEME_ID;
+      }
+    };
+
+    const applyThemeId = (id) => {
+      const resolved = (getThemeById(id)?.id) || DEFAULT_THEME_ID;
+      try {
+        if (resolved === DEFAULT_THEME_ID) document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.dataset.theme = resolved;
+      } catch {}
+      try {
+        if (resolved === DEFAULT_THEME_ID) localStorage.removeItem(TERMINAL_THEME_STORAGE_KEY);
+        else localStorage.setItem(TERMINAL_THEME_STORAGE_KEY, resolved);
+      } catch {}
+      return resolved;
+    };
+
+    const cmdThemes = (arg) => {
+      const token = String(arg || '').trim();
+
+      if (!token) {
+        const activeId = loadThemeId();
+        line('themes:', 'ok');
+        THEMES.forEach((t, i) => {
+          const mark = (t.id === activeId) ? '*' : ' ';
+          const suffix = (t.id === DEFAULT_THEME_ID) ? ' (default)' : '';
+          line(`${mark} ${String(i + 1).padStart(2)}. ${t.label}${suffix}`, 'ok');
+        });
+        line('', 'ok');
+        line('usage:', 'ok');
+        line('  themes <n|name>  - set theme (by number or name)', 'ok');
+        line('  themes reset     - reset to default', 'ok');
+        return;
+      }
+
+      if (token.toLowerCase() === 'reset') {
+        applyThemeId(DEFAULT_THEME_ID);
+        line('themes: reset to default.', 'ok');
+        return;
+      }
+
+      const resolved = resolveThemeSelection(token);
+      if (!resolved) {
+        line(`themes: unknown theme "${token}"`, 'err');
+        line('try: themes', 'ok');
+        return;
+      }
+
+      applyThemeId(resolved.id);
+      line(`themes: set to ${resolved.label}`, 'ok');
+    };
+
     const printHelp = () => {
       line('commands:', 'ok');
       line('  help        - list commands', 'ok');
       line('  whoami      - identify the meat popsicle', 'ok');
       line('  projects    - show featured projects', 'ok');
       line('  open <page> - open one of: home, about, projects, contact, links', 'ok');
-      line('  theme       - dark-only (locked)', 'ok');
+      line('  themes      - list/select themes (site-wide)', 'ok');
       line('  clear       - clear the terminal', 'ok');
       line('  matrix      - toggle terminal-only matrix rain', 'ok');
       line('  cd <dir>    - change directory (use ~ for home, .. for parent)', 'ok');
@@ -1338,6 +1406,8 @@ import {
       // Remove persisted state so the next open looks like a first boot.
       // Keep this list explicit so we don't accidentally wipe unrelated keys.
       const keys = [
+        // theme
+        TERMINAL_THEME_STORAGE_KEY,
         // quests
         STORAGE_KEY_QUESTS,
         // vault credentials
@@ -1366,6 +1436,9 @@ import {
       for (const k of keys) {
         try { localStorage.removeItem(k); } catch {}
       }
+
+      // Immediately restore default site theme (and keep current CSS default).
+      try { document.documentElement.removeAttribute('data-theme'); } catch {}
 
       // Reset in-memory session defaults.
       try { setActiveHost(ARCADE_HOST); } catch {}
@@ -1670,7 +1743,16 @@ import {
           }
           break;
         case 'theme':
-          line('dark-only (locked)', 'ok');
+          // Back-compat alias.
+          if (!arg) {
+            line('theme: use "themes" (plural).', 'ok');
+            cmdThemes('');
+          } else {
+            cmdThemes(arg);
+          }
+          break;
+        case 'themes':
+          cmdThemes(arg);
           break;
         case 'clear':
           clearOutput();
