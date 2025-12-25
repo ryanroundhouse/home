@@ -608,25 +608,21 @@ import {
     const printHelp = () => {
       line('commands:', 'ok');
       line('  help        - list commands', 'ok');
-      line('  whoami      - identify the meat popsicle', 'ok');
-      line('  projects    - show featured projects', 'ok');
-      line('  open <page> - open one of: home, about, projects, contact, links', 'ok');
-      line('  themes      - list/select themes (site-wide)', 'ok');
+      line('  themes      - list/select themes', 'ok');
       line('  clear       - clear the terminal', 'ok');
       line('  matrix      - toggle terminal-only matrix rain', 'ok');
       line('  cd <dir>    - change directory (use ~ for home, .. for parent)', 'ok');
+      line('  pwd         - print working directory', 'ok');
       line('  ls [dir]    - list directory contents', 'ok');
       line('  cat <file>  - display file contents', 'ok');
-      line('  decrypt <file> - timing exploit to unlock an encrypted file', 'ok');
-      line('  pwd         - print working directory', 'ok');
-      line('  ps          - list running processes (simulated)', 'ok');
-      line('  get <name>  - download/install a binary into ~/bin (simulated)', 'ok');
-      line('  mail        - check mailbox (simulated)', 'ok');
-      line('  bbs         - connect to Neon-City (simulated)', 'ok');
-      line('  ssh <user>@<host> - connect to a remote host (simulated)', 'ok');
-      line('  exit        - exit ssh session (back to arcade)', 'ok');
-      line('  reboot      - reboot current host (simulated)', 'ok');
-      line('  rm -rf /    - wipe all local state (DANGEROUS; asks to confirm)', 'ok');
+      line('  decrypt <file> - unlock an encrypted file', 'ok');
+      line('  mail        - check mailbox', 'ok');
+      line('  bbs         - connect to Neon-City BBS', 'ok');
+      line('  ssh <user>@<host> - connect to a remote host', 'ok');
+      line('  exit        - exit current or ssh session', 'ok');
+      line('  reboot      - reboot current host', 'ok');
+      line('  ps          - list running processes', 'ok');
+      line('  get <name>  - download/install a binary into ~/bin', 'ok');
     };
 
     const getFs = () =>
