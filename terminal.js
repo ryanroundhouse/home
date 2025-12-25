@@ -427,6 +427,15 @@ import {
       return true;
     };
 
+    const openExternal = (target) => {
+      const t = normalize(target).toLowerCase();
+      if (t === 'moodful.ca' || t === 'https://moodful.ca' || t === 'http://moodful.ca') {
+        window.open('https://moodful.ca', '_blank', 'noopener,noreferrer');
+        return true;
+      }
+      return false;
+    };
+
     const stopMatrix = () => {
       matrixOn = false;
       if (matrixAnimationId) {
@@ -1731,11 +1740,11 @@ import {
           break;
         case 'open':
           if (!arg) {
-            line('usage: open <home|about|projects|contact|links>', 'err');
+            line('usage: open <home|about|projects|contact|links|moodful.ca>', 'err');
             break;
           }
-          if (!openPage(arg)) {
-            line(`unknown page "${arg}". Try: home, about, projects, contact, links`, 'err');
+          if (!openPage(arg) && !openExternal(arg)) {
+            line(`unknown target "${arg}". Try: home, about, projects, contact, links, moodful.ca`, 'err');
           }
           break;
         case 'theme':

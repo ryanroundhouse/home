@@ -33,6 +33,7 @@
 
 ## In-browser terminal (current capabilities)
 - **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to `rg@arcade` (simulated; no networking). The ssh return context persists in localStorage so refresh won’t strand you on a remote host.
+- **Navigation**: `open <page>` navigates within the site; `open moodful.ca` opens `https://moodful.ca` in a new tab.
 - **Themes**: `themes` lists and selects from 12 site-wide themes (by number or name). Selection persists in localStorage and applies to the whole site on refresh.
 - **BBS**: `bbs` connects to Neon-City (text-only). Reading a post marks it read, stores any `Host/User/Pass` credentials in `~/vault.txt`, and can activate quest tracking in `/home/rg/TODO.md`.
 - **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
