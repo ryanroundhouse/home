@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-25**: Added a Moodful link to `links.html` with a short description (daily mood tracking + analytics + insights).
 - **2025-12-25**: Added **12 site-wide themes** inspired by popular terminal palettes, selectable via the new `themes` command in the in-browser terminal. Selection persists in localStorage and resets to the default dark theme on `rm -rf /`.
 - **2025-12-25**: Terminal `open moodful.ca` now opens `https://moodful.ca` in a new tab.
 - **2025-12-24**: Added `get` + installable binaries with a localStorage-backed `~/bin` overlay (per user@host). `get memcorrupt` installs `memcorrupt` with download-like output; `memcorrupt <pid>` now gates on the fantasy-football quest and launches the “Memory Injection” minigame on the correct service PID.

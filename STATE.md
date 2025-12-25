@@ -14,6 +14,7 @@
 - **Root**: static site pages + shared assets
   - `index.html`, `about.html`, `projects.html`, `contact.html`, `links.html`
   - `styles.css`, `script.js`, `terminal.js`
+- `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)
   - `.cursor/commands/` (Cursor custom slash commands)
