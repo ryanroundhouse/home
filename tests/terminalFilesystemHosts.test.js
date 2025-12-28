@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getNode, getActiveHost, setActiveHost } from '../lib/terminalFilesystem.js';
+import { getNode, getDirectoryContents, getActiveHost, setActiveHost } from '../lib/terminalFilesystem.js';
 
 test('multi-host filesystem: can switch active host and resolve paths accordingly', () => {
   // start from whatever the module default is
@@ -39,6 +39,18 @@ test('multi-host filesystem: can switch active host and resolve paths accordingl
   assert.equal(setActiveHost('arcade'), true);
   assert.equal(getActiveHost(), 'arcade');
   assert.ok(getNode('/home/rg'), 'back on arcade');
+});
+
+test('arcade Documents: guidance.txt is readable by path and appears in directory listing', () => {
+  assert.equal(setActiveHost('arcade'), true);
+  assert.ok(getNode('/home/rg/Documents'), 'arcade has /home/rg/Documents');
+
+  assert.ok(getNode('/home/rg/Documents/guidance.txt'), 'guidance.txt exists at its path');
+  assert.equal(getNode('/home/rg/Documents/notes.txt'), null, 'old mismatched key should not exist');
+
+  const entries = getDirectoryContents('/home/rg/Documents') || [];
+  const names = entries.map((n) => String(n?.name || '')).filter(Boolean);
+  assert.ok(names.includes('guidance.txt'), 'ls should show guidance.txt');
 });
 
 test('setActiveHost: rejects unknown hosts and does not change active host', () => {

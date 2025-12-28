@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-28**: Fixed `guidance.txt` in the simulated terminal filesystem: it showed up in `ls` but failed `cat` due to a mismatched seed key. Added regression tests, including a “seat-belt” that asserts all filesystem `contents` keys match `node.name` across hosts.
 - **2025-12-25**: Added a Moodful link to `links.html` with a short description (daily mood tracking + analytics + insights).
 - **2025-12-25**: Added **12 site-wide themes** inspired by popular terminal palettes, selectable via the new `themes` command in the in-browser terminal. Selection persists in localStorage and resets to the default dark theme on `rm -rf /`.
 - **2025-12-25**: Terminal `open moodful.ca` now opens `https://moodful.ca` in a new tab.
