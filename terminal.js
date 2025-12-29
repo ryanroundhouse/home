@@ -21,6 +21,7 @@ import {
 } from './lib/terminalVault.js';
 import { playTimingBarGame } from './lib/timingBarGame.js';
 import { openMemoryInjectionGame } from './lib/memoryInjectionGame.js';
+import { openPipesGame } from './lib/pipesGame.js';
 import { listProcesses } from './lib/terminalPs.js';
 import {
   makeFilesystemOverlay,
@@ -28,6 +29,11 @@ import {
   isBinaryInstalled,
   TERMINAL_BIN_STORAGE_KEY,
 } from './lib/terminalGet.js';
+import {
+  makeUnlockOverlay,
+  unlockFile,
+  TERMINAL_UNLOCKS_STORAGE_KEY,
+} from './lib/terminalUnlocks.js';
 import {
   isProcessCorrupted,
   markProcessCorrupted,
@@ -113,9 +119,14 @@ import {
 
     const QUESTS_VERSION = 1;
     const MOODFUL_REBOOT_REQUEST_MAIL_ID = 'rg_arcade_ops_moodful_reboot_request_v1';
+    const MINDWARP_BIRTHDAY_MAIL_ID = 'jsj_mindwarp_happy_birthday_v1';
     const BBS_GROUP_ID = 'neon.missions';
     const BBS_MISSION_POST_ID = 'neon_missions_fantasy_score_quietly_v1';
     const BBS_MISSION_THANKS_POST_ID = 'neon_missions_fantasy_score_quietly_thanks_v1';
+    const BBS_SHADOW_PARTY_POST_ID = 'neon_missions_shadow_party_mindwarp_leak_v1';
+    const SHADOW_SNAPSHOT_PATH = '/home/rg/bbs/leaks/shadow.snapshot';
+    const HASH_INDEX_JSJ_SALT = 'A7Q2';
+    const HASH_INDEX_JSJ_HASH = '9f3c1b2a9d';
 
     const defaultArcadeFrame = () => ({
       host: ARCADE_HOST,
@@ -253,6 +264,13 @@ import {
         memoryInjected: false,
         thanksRead: false,
       },
+      shadowParty: {
+        postRead: false,
+        snapshotUnlocked: false,
+        hashIndexInstalled: false,
+        sshMindwarp: false,
+        birthdayRead: false,
+      },
     });
 
     const isObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -273,6 +291,13 @@ import {
           s.fantasyScoreFix.postRead = parsed.fantasyScoreFix.postRead === true;
           s.fantasyScoreFix.memoryInjected = parsed.fantasyScoreFix.memoryInjected === true;
           s.fantasyScoreFix.thanksRead = parsed.fantasyScoreFix.thanksRead === true;
+        }
+        if (isObject(parsed.shadowParty)) {
+          s.shadowParty.postRead = parsed.shadowParty.postRead === true;
+          s.shadowParty.snapshotUnlocked = parsed.shadowParty.snapshotUnlocked === true;
+          s.shadowParty.hashIndexInstalled = parsed.shadowParty.hashIndexInstalled === true;
+          s.shadowParty.sshMindwarp = parsed.shadowParty.sshMindwarp === true;
+          s.shadowParty.birthdayRead = parsed.shadowParty.birthdayRead === true;
         }
         return s;
       } catch {
@@ -322,6 +347,26 @@ import {
         ].join('\n'));
       }
 
+      const sp = q.shadowParty;
+      const shadowComplete = !!(
+        sp?.postRead &&
+        sp?.snapshotUnlocked &&
+        sp?.hashIndexInstalled &&
+        sp?.sshMindwarp &&
+        sp?.birthdayRead
+      );
+      if (sp?.postRead && !shadowComplete) {
+        sections.push([
+          '## Quest: Shadow Party — mindwarp creds leak',
+          `- ${box(!!sp.postRead)} Read BBS thread / obtain leak`,
+          `- ${box(!!sp.hashIndexInstalled)} Install hash-index`,
+          `- ${box(!!sp.sshMindwarp)} SSH into jsj@mindwarp.com`,
+          `- ${box(!!sp.birthdayRead)} Read mail`,
+          '',
+          '',
+        ].join('\n'));
+      }
+
       if (sections.length === 0) {
         return ['# TODO', '', 'No active quests.', ''].join('\n');
       }
@@ -335,8 +380,16 @@ import {
       const complete = m.sshRootFirst && m.rebootEmailRead && m.moodfulRebooted;
       const f = q.fantasyScoreFix;
       const fantasyComplete = !!(f?.postRead && f?.memoryInjected && f?.thanksRead);
+      const sp = q.shadowParty;
+      const shadowComplete = !!(
+        sp?.postRead &&
+        sp?.snapshotUnlocked &&
+        sp?.hashIndexInstalled &&
+        sp?.sshMindwarp &&
+        sp?.birthdayRead
+      );
 
-      if (!complete && !fantasyComplete) {
+      if (!complete && !fantasyComplete && !shadowComplete) {
         return ['# DONE', '', 'Nothing completed yet.', ''].join('\n');
       }
 
@@ -357,6 +410,16 @@ import {
           [
             '## Quest: Fantasy football — score correction',
             '- Completed: Patched volatile score memory (66 → 69)',
+            '',
+          ].join('\n')
+        );
+      }
+
+      if (shadowComplete) {
+        sections.push(
+          [
+            '## Quest: Shadow Party — mindwarp creds leak',
+            '- Completed: Logged into mindwarp.com and read the birthday mail',
             '',
           ].join('\n')
         );
@@ -634,15 +697,23 @@ import {
       line('  get <name>  - download/install a binary into ~/bin', 'ok');
     };
 
-    const getFs = () =>
-      makeFilesystemOverlay({
+    const getFs = () => {
+      const unlocked = makeUnlockOverlay({
+        storage: localStorage,
+        host: sessionHost,
+        baseGetNode: getNode,
+        baseGetDirectoryContents: getDirectoryContents,
+      });
+
+      return makeFilesystemOverlay({
         storage: localStorage,
         host: sessionHost,
         user: sessionUser,
         homeDir,
-        baseGetNode: getNode,
-        baseGetDirectoryContents: getDirectoryContents,
+        baseGetNode: unlocked.getNode,
+        baseGetDirectoryContents: unlocked.getDirectoryContents,
       });
+    };
 
     /* -----------------------------
      * Decrypt persistence (localStorage)
@@ -927,6 +998,7 @@ import {
         line('usage: get <name>', 'ok');
         line('available:', 'ok');
         line('  memcorrupt', 'ok');
+        line('  hash-index', 'ok');
         return;
       }
 
@@ -945,6 +1017,18 @@ import {
       if (!res.changed) {
         line(`get: ${name}: already installed`, 'ok');
         return;
+      }
+
+      // Quest hook: installing hash-index advances Shadow Party.
+      try {
+        const q = loadQuestState();
+        if (String(name).trim().toLowerCase() === 'hash-index' && q?.shadowParty && !q.shadowParty.hashIndexInstalled) {
+          q.shadowParty.hashIndexInstalled = true;
+          saveQuestState(q);
+          line('quest: updated /home/rg/TODO.md', 'ok');
+        }
+      } catch (e) {
+        console.warn('Failed to record hash-index install quest event:', e);
       }
 
       // Print something that feels like a real fetch/install (still fully offline).
@@ -1210,6 +1294,20 @@ import {
       } catch (e) {
         console.warn('Failed to record quest mail-read event:', e);
       }
+
+      // Quest hook: reading mindwarp birthday mail completes Shadow Party.
+      try {
+        if (sessionHost === 'mindwarp.com' && msg.id === MINDWARP_BIRTHDAY_MAIL_ID) {
+          const q = loadQuestState();
+          if (q?.shadowParty && !q.shadowParty.birthdayRead) {
+            q.shadowParty.birthdayRead = true;
+            saveQuestState(q);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record Shadow Party birthday mail event:', e);
+      }
     };
 
     const endPendingBbs = () => {
@@ -1351,6 +1449,61 @@ import {
         console.warn('Failed to record BBS quest read event:', e);
       }
 
+      // Quest hook: Shadow Party BBS post triggers one-time “download” + vault stub + TODO activation.
+      try {
+        if (sessionHost === ARCADE_HOST && post.id === BBS_SHADOW_PARTY_POST_ID) {
+          const q = loadQuestState();
+          if (!q.shadowParty?.postRead) {
+            q.shadowParty.postRead = true;
+
+            // Unlock the encrypted snapshot file (toy data; fully offline).
+            const snapshotText = [
+              '# mindwarp.com shadow snapshot',
+              '#',
+              '# record format:',
+              '#   <user>:$toy$<salt>$<hash>',
+              '#',
+              '# salt: the 3rd field (after $toy$)',
+              '# hash: the 4th field (after the salt)',
+              '',
+              'jsj:$toy$A7Q2$9f3c1b2a9d',
+              'clem:$toy$B1K9$0aa19f3e72',
+              'annie:$toy$QX77$77c0aa11be',
+              '',
+            ].join('\n');
+
+            const unlocked = unlockFile(localStorage, {
+              host: sessionHost,
+              path: SHADOW_SNAPSHOT_PATH,
+              node: {
+                type: 'file',
+                name: 'shadow.snapshot',
+                permissions: '-rw-r--r--',
+                owner: 'rg',
+                group: 'rg',
+                encrypted: true,
+                content: snapshotText,
+              },
+            });
+            if (unlocked.ok) q.shadowParty.snapshotUnlocked = true;
+            saveQuestState(q);
+
+            line('Downloading shadow.snapshot…', 'ok');
+            line('[==========                    ]  35%', 'ok');
+            line('[====================          ]  70%', 'ok');
+            line('[==============================] 100%', 'ok');
+            line("Saved: /home/rg/bbs/leaks/shadow.snapshot", 'ok');
+
+            // Create a vault entry stub (password unknown for now).
+            addCredential(localStorage, { host: 'mindwarp.com', user: 'jsj' });
+            line('credentials stored in ~/vault.txt', 'ok');
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record Shadow Party BBS read event:', e);
+      }
+
       // Quest hook: reading the follow-up “thanks” post completes the fantasy mission (moves TODO -> DONE).
       try {
         if (sessionHost === ARCADE_HOST && post.id === BBS_MISSION_THANKS_POST_ID) {
@@ -1423,6 +1576,8 @@ import {
         'rg_terminal_mail_v1',
         // decrypt state
         STORAGE_KEY_DECRYPTED,
+        // unlocked files
+        TERMINAL_UNLOCKS_STORAGE_KEY,
         // installed binaries
         STORAGE_KEY_BIN,
         // memcorrupt state
@@ -1508,6 +1663,20 @@ import {
       updatePrompt();
       saveToStorage();
       line(`Connected to ${sessionHost}.`, 'ok');
+
+      // Quest hook: successful ssh to mindwarp.com as jsj.
+      try {
+        if (auth.host === 'mindwarp.com' && auth.user === 'jsj') {
+          const q = loadQuestState();
+          if (q?.shadowParty && !q.shadowParty.sshMindwarp) {
+            q.shadowParty.sshMindwarp = true;
+            saveQuestState(q);
+            line('quest: updated /home/rg/TODO.md', 'ok');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to record Shadow Party ssh event:', e);
+      }
     };
 
     const cmdReboot = () => {
@@ -1644,6 +1813,7 @@ import {
           line('[+] MEMORY CORRUPTION SUCCESSFUL', 'ok');
           line('[+] ACCESS GRANTED', 'ok');
           markFileDecrypted({ host: sessionHost, path: resolved });
+
           // After decrypt, display plaintext in terminal.
           cmdCat(arg);
           return;
@@ -1789,6 +1959,49 @@ import {
         case 'memcorrupt':
           await cmdMemcorrupt(arg);
           break;
+        case 'hash-index': {
+          // Must be installed into ~/bin first.
+          if (!isBinaryInstalled(localStorage, { host: sessionHost, user: sessionUser, name: 'hash-index' })) {
+            line('hash-index: not installed. run: get hash-index', 'err');
+            return;
+          }
+          if (sessionHost !== ARCADE_HOST) {
+            line('hash-index: not available on this host', 'err');
+            return;
+          }
+
+          const parts = String(arg || '').trim().split(/\s+/).filter(Boolean);
+          if (parts.length !== 2) {
+            line('usage: hash-index <salt> <hash>', 'err');
+            return;
+          }
+
+          const [salt, hash] = parts;
+          const isJsj = salt === HASH_INDEX_JSJ_SALT && hash === HASH_INDEX_JSJ_HASH;
+          if (!isJsj) {
+            line('hash-index: no weak password found for that pair', 'err');
+            return;
+          }
+
+          // Block terminal input while modal is running.
+          input.disabled = true;
+          setChip('hash-index: routing');
+          try {
+            const result = await openPipesGame({ timeLimitSeconds: 25 });
+            if (result?.win) {
+              line('weak password found: hackerman', 'ok');
+              addCredential(localStorage, { host: 'mindwarp.com', user: 'jsj', password: 'hackerman' });
+              return;
+            }
+
+            line('hash-index: calc buffer overflow; please try again', 'err');
+          } finally {
+            input.disabled = false;
+            setChip('type: help');
+            try { input.focus(); } catch {}
+          }
+          break;
+        }
         case 'mail':
           cmdMail(arg);
           break;
@@ -1932,6 +2145,7 @@ import {
         // If a blocking modal is open above the terminal, do not close the terminal.
         if (document.body.classList.contains('decrypt-open')) return;
         if (document.body.classList.contains('meminject-open')) return;
+        if (document.body.classList.contains('pipes-open')) return;
         e.preventDefault();
         close();
       }

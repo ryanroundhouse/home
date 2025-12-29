@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2025-12-28
+- **Last updated**: 2025-12-29
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -21,7 +21,6 @@
   - `.cursor/commands/` (Cursor custom slash commands)
   - `package.json` (Node test scripts; ESM)
 - **`lib/`**: shared ESM modules (pure functions; used by browser + Node tests)
-- **`src/`**: Node/test-only JS modules (pure functions)
 - **`tests/`**: Node test files (run via `node --test`)
 
 ## Tooling & constraints
@@ -42,9 +41,10 @@
 - **Unlocks**: certain actions can unhide hidden mail (e.g. first successful `ssh root@moodful.ca` reveals an ops reboot-request email in `rg@arcade`).
 - **Reboot**: `reboot` runs a short countdown; on `arcade` it closes the terminal, and on ssh hosts it drops you back to the prior session.
 - **Processes**: `ps` shows pretend processes on the current host (always your `-bash`; fantasy-football-league.com also runs a webserver service with a PID).
-- **Installable binaries**: `get <name>` installs binaries into `~/bin` for the current `user@host` (persists in localStorage `rg_terminal_bin_v1`). Currently available: `memcorrupt` (on the fantasy-football quest, running `memcorrupt <pid>` on the service PID triggers the “Memory Injection” matching minigame; on success it appends a “thanks” reply to the Neon-City BBS thread, and **reading the follow-up completes the mission**. Injection is one-time per PID, persisted in localStorage `rg_terminal_memcorrupt_v1`).
+- **Installable binaries**: `get <name>` installs binaries into `~/bin` for the current `user@host` (persists in localStorage `rg_terminal_bin_v1`). Currently available: `memcorrupt` (fantasy-football quest; launches Memory Injection) and `hash-index` (Shadow Party quest; launches Pipes).
 - **Quests**: `cat /home/rg/TODO.md` shows active quest progress and `cat /home/rg/DONE.md` shows completed quests (activated by reading the Moodful reboot-request email; completing the Moodful reboot unlocks a thank-you email).
 - **Encrypted files**: certain files have `encrypted: true` in the embedded filesystem; `cat` prints corrupted ASCII until you successfully run `decrypt <file>` (timing-bar minigame) to unlock plaintext (persists in localStorage).
+- **Unlockable files**: some missions can “download” files that don’t exist in the embedded filesystem until triggered (persisted in localStorage `rg_terminal_unlocks_v1`).
 - **Permissions**: `cd`/`ls`/`cat` enforce embedded UNIX-style `permissions` (with `root` bypass), so protected directories like `fantasy-football-league.com:/fantasy-football-scores` are inaccessible to non-root users.
 - **Reset**: `rm -rf /` (simulated) prompts for confirmation and then wipes all local terminal state (quests, mail, history/output, session, decrypt unlocks, theme selection) so you can start fresh.
 - **Vault**: `~/vault.txt` is an encrypted “special file”. After decrypting it, `cat ~/vault.txt` shows a dynamic ledger of stored credentials learned from emails (persisted in localStorage). `rm -rf /` wipes vault state too.
@@ -66,6 +66,7 @@
 │   ├── slugify.js
 │   ├── memoryInjectionDiff.js
 │   ├── memoryInjectionGame.js
+│   ├── pipesGame.js
 │   ├── terminalFormat.js
 │   ├── terminalPaths.js
 │   ├── terminalPermissions.js
@@ -76,6 +77,7 @@
 │   ├── terminalMailData.js
 │   ├── terminalBbs.js
 │   ├── terminalBbsData.js
+│   ├── terminalUnlocks.js
 │   ├── terminalMemcorrupt.js
 │   ├── terminalThemes.js
 │   ├── terminalVault.js
@@ -89,9 +91,6 @@
 ├── script.js
 ├── terminal.js
 ├── background1.gif
-├── src/
-│   └── js/
-│       └── lib/
 └── tests/
     ├── slugify.test.js
     ├── memoryInjectionDiff.test.js
@@ -105,6 +104,7 @@
     ├── terminalPermissions.test.js
     ├── terminalPs.test.js
     ├── terminalSsh.test.js
+    ├── terminalUnlocks.test.js
     └── terminalVault.test.js
 ```
 

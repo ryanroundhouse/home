@@ -1,6 +1,11 @@
 ## Agent change log
 
 ### Unreleased
+- **2025-12-29**: Shrunk Pipes modal layout ~30% (dialog + tiles + spacing) while keeping font sizes unchanged.
+- **2025-12-29**: Pipes minigame now randomizes the route/solution on each launch (still guaranteed solvable).
+- **2025-12-29**: Reduced Shadow Party quest hand-holding by removing internal checkpoints (decrypt/salt+hash/weak-password) from TODO.md and removing the code that tracked them.
+- **2025-12-29**: Tweaked Shadow Party: mindwarp birthday mail timestamp set to Dec 29 2025 @ 8:11am; Pipes win now shows a “WEAK PASSWORD FOUND” success stamp before returning to the terminal.
+- **2025-12-28**: Added a new terminal mission “Shadow Party” (BBS thread → unlockable encrypted `shadow.snapshot` → `get hash-index` → `hash-index` launches a new Pipes minigame modal → vault password backfill → `ssh jsj@mindwarp.com` → `mail` birthday message). Includes a new simulated host `mindwarp.com` and new tests for unlockable files + hash-index installs.
 - **2025-12-28**: Fixed `guidance.txt` in the simulated terminal filesystem: it showed up in `ls` but failed `cat` due to a mismatched seed key. Added regression tests, including a “seat-belt” that asserts all filesystem `contents` keys match `node.name` across hosts.
 - **2025-12-25**: Added a Moodful link to `links.html` with a short description (daily mood tracking + analytics + insights).
 - **2025-12-25**: Added **12 site-wide themes** inspired by popular terminal palettes, selectable via the new `themes` command in the in-browser terminal. Selection persists in localStorage and resets to the default dark theme on `rm -rf /`.

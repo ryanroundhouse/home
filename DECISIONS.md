@@ -200,6 +200,18 @@
   - Themes remain fully offline (no deps, no network calls) and are controlled from within the terminal.
   - The site’s look can be changed without a build step by using existing CSS variables and `data-theme` overrides.
 
+### ADR-0013 — Unlockable filesystem nodes via localStorage overlay (mission “downloads”)
+- **Status**: Accepted
+- **Date**: 2025-12-28
+- **Context**: Some missions need to “download” or reveal files at paths that should not exist until an in-game trigger happens (e.g. reading a BBS post), without mutating the embedded filesystem seed catalog.
+- **Decision**:
+  - Add a versioned localStorage blob `rg_terminal_unlocks_v1` that stores unlocked **file nodes** keyed by `host:path`.
+  - Expose unlocked files via a minimal filesystem overlay (`lib/terminalUnlocks.js`) composed ahead of the `~/bin` overlay.
+  - Include the unlocks key in the explicit `rm -rf /` wipe list so reset returns to a clean slate.
+- **Consequences**:
+  - Missions can reveal encrypted/hidden files deterministically and offline (no network calls).
+  - Future missions can reuse the same “unlock file once” mechanism without expanding the static filesystem seed.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

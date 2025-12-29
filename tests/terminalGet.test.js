@@ -44,6 +44,19 @@ test('installBinary: memcorrupt installs per user@host and is idempotent', () =>
   assert.ok(state.installs['rg@arcade'].memcorrupt);
 });
 
+test('installBinary: hash-index installs per user@host and is idempotent', () => {
+  const storage = makeStorage();
+
+  const r1 = installBinary(storage, { host: 'arcade', user: 'rg', homeDir: '/home/rg', name: 'hash-index' });
+  assert.equal(r1.ok, true);
+  assert.equal(r1.changed, true);
+  assert.equal(isBinaryInstalled(storage, { host: 'arcade', user: 'rg', name: 'hash-index' }), true);
+
+  const r2 = installBinary(storage, { host: 'arcade', user: 'rg', homeDir: '/home/rg', name: 'hash-index' });
+  assert.equal(r2.ok, true);
+  assert.equal(r2.changed, false);
+});
+
 test('makeFilesystemOverlay: after install, ~/bin and ~/bin/memcorrupt appear in listings', () => {
   const storage = makeStorage();
   installBinary(storage, { host: 'arcade', user: 'rg', homeDir: '/home/rg', name: 'memcorrupt' });
@@ -79,6 +92,35 @@ test('makeFilesystemOverlay: after install, ~/bin and ~/bin/memcorrupt appear in
   const homeList = getDirectoryContents('/home/rg');
   assert.ok(Array.isArray(homeList));
   assert.ok(homeList.some((n) => n && n.type === 'directory' && n.name === 'bin'));
+});
+
+test('makeFilesystemOverlay: after install, ~/bin/hash-index appears and is executable', () => {
+  const storage = makeStorage();
+  installBinary(storage, { host: 'arcade', user: 'rg', homeDir: '/home/rg', name: 'hash-index' });
+
+  assert.equal(setActiveHost('arcade'), true);
+
+  const { getNode, getDirectoryContents } = makeFilesystemOverlay({
+    storage,
+    host: 'arcade',
+    user: 'rg',
+    homeDir: '/home/rg',
+    baseGetNode,
+    baseGetDirectoryContents,
+  });
+
+  const binNode = getNode('/home/rg/bin');
+  assert.ok(binNode);
+  assert.equal(binNode.type, 'directory');
+
+  const tool = getNode('/home/rg/bin/hash-index');
+  assert.ok(tool);
+  assert.equal(tool.type, 'file');
+  assert.equal(tool.permissions, '-rwxr-xr-x');
+
+  const binList = getDirectoryContents('/home/rg/bin');
+  assert.ok(Array.isArray(binList));
+  assert.ok(binList.some((n) => n && n.type === 'file' && n.name === 'hash-index'));
 });
 
 
