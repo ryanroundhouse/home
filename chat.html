@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Ryan Graham — Chatroom</title>
+    <meta
+      name="description"
+      content="Local-first retro chatroom demo with rooms, avatars, emotes, and keyboard shortcuts."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./script.js"></script>
+    <script type="module" src="./chat.js"></script>
+    <script type="module" src="./terminal.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="./index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="chat.html">Chat</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="projects.html">Projects</a>
+            <a href="chat.html">Chat</a>
+            <a href="contact.html">Contact</a>
+            <a href="links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <section class="panel chat-shell" aria-label="Chatroom">
+        <div class="chat-shell-head">
+          <div>
+            <div class="kicker">Chatroom</div>
+            <h1 class="glow">Neon Lobby</h1>
+            <p class="chat-note" style="margin: 0">
+              WebSocket chat client targeting <span class="glow">wss://rgbot.graham.pub:8443</span>. Rooms and history are
+              expected to come from the backend (see `CHAT_BACKEND_WEBSOCKET_PROMPT.md`).
+            </p>
+          </div>
+          <div class="chat-status-wrap" aria-live="polite" aria-atomic="true">
+            <span id="chatStatus" class="chip">Connecting…</span>
+          </div>
+        </div>
+
+        <div class="chat-layout">
+          <aside class="chat-sidebar" aria-label="Rooms and profile">
+            <section class="chat-section">
+              <div class="chat-section-title">Identity</div>
+              <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
+                <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                <div class="field" style="margin: 0">
+                  <label for="chatNameInput">Name (no spaces)</label>
+                  <input
+                    id="chatNameInput"
+                    name="chatName"
+                    type="text"
+                    maxlength="24"
+                    pattern="\\S+"
+                    autocapitalize="none"
+                    spellcheck="false"
+                    required
+                  />
+                </div>
+                <div class="chat-inline-actions" aria-label="Identity actions">
+                  <button type="submit" class="btn primary chat-mini-btn">Save Name</button>
+                  <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="chat-section">
+              <div class="chat-section-title">Rooms</div>
+              <form id="chatRoomForm" class="chat-room-form" autocomplete="off">
+                <div class="field" style="margin: 0">
+                  <label for="chatRoomInput">Create / Join Room</label>
+                  <input
+                    id="chatRoomInput"
+                    name="chatRoom"
+                    type="text"
+                    maxlength="40"
+                    placeholder="lobby"
+                    spellcheck="false"
+                    required
+                  />
+                </div>
+                <div class="chat-inline-actions" aria-label="Room actions">
+                  <button type="submit" class="btn primary chat-mini-btn">Create / Join</button>
+                </div>
+              </form>
+
+              <div class="chat-room-list-wrap">
+                <ul id="chatRoomList" class="chat-room-list" role="listbox" aria-label="Available rooms"></ul>
+              </div>
+            </section>
+
+            <section class="chat-section">
+              <div class="chat-section-title">Shortcuts</div>
+              <ul class="chat-shortcuts" aria-label="Keyboard shortcuts">
+                <li><code>Ctrl/Cmd+K</code> room input</li>
+                <li><code>Ctrl/Cmd+L</code> message input</li>
+                <li><code>Alt+N</code> name field</li>
+                <li><code>Alt+R</code> create/join typed room</li>
+                <li><code>Alt+A</code> reroll avatar</li>
+                <li><code>[</code> / <code>]</code> prev/next room</li>
+                <li><code>/emote &lt;text&gt;</code> emote message</li>
+              </ul>
+            </section>
+          </aside>
+
+          <section class="chat-main" aria-label="Active room chat">
+            <header class="chat-room-header">
+              <div>
+                <div class="chat-room-label">Current room</div>
+                <h2 id="chatActiveRoomName" class="glow">#lobby</h2>
+              </div>
+              <div class="chat-room-meta">
+                <span id="chatRoomMeta" class="chip">0 messages</span>
+                <button type="button" id="chatMuteToggle" class="btn ghost chat-mini-btn" aria-pressed="false">
+                  Sound On
+                </button>
+              </div>
+            </header>
+
+            <div id="chatMessages" class="chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+            <form id="chatComposer" class="chat-composer" autocomplete="off">
+              <label class="sr-only" for="chatMessageInput">Message</label>
+              <input
+                id="chatMessageInput"
+                name="message"
+                type="text"
+                maxlength="400"
+                placeholder="Type a message. Use /emote wave"
+                spellcheck="false"
+                required
+              />
+              <button type="submit" class="btn primary">Send</button>
+            </form>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div id="terminalDialog" class="terminal" role="dialog" aria-modal="true" aria-label="Terminal">
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="input command or type help"
+            />
+          </div>
+          <div class="help">
+            Tip: try <span class="glow">open chat</span> or <span class="glow">themes</span>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

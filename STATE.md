@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2025-12-29
+- **Last updated**: 2026-02-22
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -13,9 +13,11 @@
 
 ## Directory layout (high level)
 - **Root**: static site pages + shared assets
-  - `index.html`, `about.html`, `projects.html`, `contact.html`, `links.html`
-  - `styles.css`, `script.js`, `terminal.js`
+  - `index.html`, `about.html`, `projects.html`, `chat.html`, `contact.html`, `links.html`
+  - `styles.css`, `script.js`, `chat.js`, `terminal.js`
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
+- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state).
+- `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)
   - `.cursor/commands/` (Cursor custom slash commands)
@@ -34,7 +36,7 @@
 
 ## In-browser terminal (current capabilities)
 - **Multi-host sessions**: `ssh <user>@<host>` (password prompt) + `exit` to return to `rg@arcade` (simulated; no networking). The ssh return context persists in localStorage so refresh won’t strand you on a remote host.
-- **Navigation**: `open <page>` navigates within the site; `open moodful.ca` opens `https://moodful.ca` in a new tab.
+- **Navigation**: `open <page>` navigates within the site (including `open chat`); `open moodful.ca` opens `https://moodful.ca` in a new tab.
 - **Themes**: `themes` lists and selects from 12 site-wide themes (by number or name). Selection persists in localStorage and applies to the whole site on refresh.
 - **BBS**: `bbs` connects to Neon-City (text-only). Reading a post marks it read, stores any `Host/User/Pass` credentials in `~/vault.txt`, and can activate quest tracking in `/home/rg/TODO.md`.
 - **Mail**: `mail` to list inbox for the current `user@host`, `mail <n>` to read (marks read). Mail state persists in localStorage and seed mail comes from `lib/terminalMailData.js` (some messages can be hidden until unlocked via `unlockKey`).
@@ -59,6 +61,7 @@
 ├── .nvmrc
 ├── AGENTS.md
 ├── CHANGELOG.md
+├── CHAT_BACKEND_WEBSOCKET_PROMPT.md
 ├── DECISIONS.md
 ├── STATE.md
 ├── package.json
@@ -85,10 +88,12 @@
 ├── index.html
 ├── about.html
 ├── projects.html
+├── chat.html
 ├── contact.html
 ├── links.html
 ├── styles.css
 ├── script.js
+├── chat.js
 ├── terminal.js
 ├── background1.gif
 └── tests/
@@ -112,5 +117,3 @@
 - Update this file when you change structure, commands, or conventions.
 - Update `CHANGELOG.md` at the end of agent work.
 - Ensure `npm test` passes if JS changes were made.
-
-

@@ -44,6 +44,7 @@ import { DEFAULT_THEME_ID, getThemeById, TERMINAL_THEME_STORAGE_KEY } from './li
       'index.html': 'index.html',
       'about.html': 'about.html',
       'projects.html': 'projects.html',
+      'chat.html': 'chat.html',
       'contact.html': 'contact.html',
       'links.html': 'links.html',
     };
@@ -268,4 +269,3 @@ ${message}
     initContactForm();
   });
 })();
-

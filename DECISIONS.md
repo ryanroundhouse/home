@@ -212,8 +212,20 @@
   - Missions can reveal encrypted/hidden files deterministically and offline (no network calls).
   - Future missions can reuse the same “unlock file once” mechanism without expanding the static filesystem seed.
 
+### ADR-0014 — Chatroom frontend targets a WebSocket backend with a documented protocol contract
+- **Status**: Accepted
+- **Date**: 2026-02-22
+- **Context**: We want a public multi-user chatroom page (rooms/history/avatars/emotes/keyboard shortcuts) using vanilla HTML/CSS/JS, which requires realtime server communication.
+- **Decision**:
+  - Implement `chat.html` + `chat.js` as a WebSocket client targeting `wss://rgbot.graham.pub:8443` (configurable in `chat.js`).
+  - Keep client identity local (`name`, `avatarId`, session id, active room, mute state) in localStorage, while rooms/messages/history come from the backend.
+  - Cap displayed/joined room history at **500** messages and rely on backend protocol messages (`welcome`, `room_list`, `joined_room`, `message`, `profile_ack`, `error`).
+  - Define the backend contract in `CHAT_BACKEND_WEBSOCKET_PROMPT.md` so frontend and backend can be built concurrently.
+  - Keep the frontend keyboard-first and generate avatar SVGs client-side (no avatar assets required).
+- **Consequences**:
+  - The chat page can support real multi-user realtime chat once the backend is deployed.
+  - This intentionally introduces a new network dependency for the chat page (WebSocket connection), which is a scoped exception to the site’s prior no-network-chat behavior.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.
-
-

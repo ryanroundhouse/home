@@ -481,6 +481,7 @@ import {
         home: 'index.html',
         about: 'about.html',
         projects: 'projects.html',
+        chat: 'chat.html',
         contact: 'contact.html',
         links: 'links.html',
       };
@@ -1910,7 +1911,7 @@ import {
           break;
         case 'open':
           if (!arg) {
-            line('usage: open <home|about|projects|contact|links|moodful.ca>', 'err');
+            line('usage: open <home|about|projects|chat|contact|links|moodful.ca>', 'err');
             break;
           }
           if (!openPage(arg) && !openExternal(arg)) {
@@ -2193,4 +2194,3 @@ import {
     initTerminal();
   });
 })();
-
