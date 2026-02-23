@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2026-02-22**: Added locally bundled chat notification WAVs (`assets/sounds/chat-ping.wav`, `assets/sounds/chat-gong.wav`) sourced from OpenGameArt and deployed with the site; `chat.js` now plays these files for message ping + mention gong (with synthesized tones kept as fallback).
 - **2026-02-22**: Added a new `chat.html` page + `chat.js` chatroom UI (vanilla HTML/CSS/JS) with room creation/joining, per-room history display capped at 500 messages, no-auth profiles (name + random SVG avatar), `/emote` messages, timestamps, keyboard shortcuts, and ping/gong audio notifications.
 - **2026-02-22**: Switched the chat frontend to a WebSocket-backed client targeting `wss://rgbot.graham.pub:8443` (auto-reconnect + heartbeat + protocol-driven rooms/history/messages) so it can work with a real multi-user backend.
 - **2026-02-22**: Added `CHAT_BACKEND_WEBSOCKET_PROMPT.md` with a concrete backend build prompt and JSON protocol contract (rooms, joins, 500-message history, profile updates, message broadcast) so backend work can proceed in parallel.

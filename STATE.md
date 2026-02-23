@@ -15,6 +15,7 @@
 - **Root**: static site pages + shared assets
   - `index.html`, `about.html`, `projects.html`, `chat.html`, `contact.html`, `links.html`
   - `styles.css`, `script.js`, `chat.js`, `terminal.js`
+- **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
 - `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state).
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
@@ -60,6 +61,11 @@
 ├── .cursorrules
 ├── .nvmrc
 ├── AGENTS.md
+├── assets/
+│   └── sounds/
+│       ├── ATTRIBUTION.md
+│       ├── chat-gong.wav
+│       └── chat-ping.wav
 ├── CHANGELOG.md
 ├── CHAT_BACKEND_WEBSOCKET_PROMPT.md
 ├── DECISIONS.md

@@ -29,6 +29,11 @@
     sessionId: '',
     statusTimer: null,
     muted: false,
+    userInteracted: false,
+    soundFx: {
+      ping: null,
+      gong: null,
+    },
     audioCtx: null,
     audioEnabled: false,
   };
@@ -50,6 +55,7 @@
     initForms();
     initRoomListInteractions();
     initShortcuts();
+    loadSoundEffects();
     initAudioUnlock();
 
     renderAll();
@@ -188,7 +194,9 @@
 
   function initAudioUnlock() {
     const unlock = () => {
+      state.userInteracted = true;
       void ensureAudioContext();
+      primeSoundEffects();
       window.removeEventListener('pointerdown', unlock, true);
       window.removeEventListener('keydown', unlock, true);
     };
@@ -1034,6 +1042,7 @@
   }
 
   async function playPing() {
+    if (await playSoundFile('ping')) return;
     const ctx = await ensureAudioContext();
     if (!ctx || !state.audioEnabled || state.muted) return;
     const now = ctx.currentTime;
@@ -1042,6 +1051,7 @@
   }
 
   async function playGong() {
+    if (await playSoundFile('gong')) return;
     const ctx = await ensureAudioContext();
     if (!ctx || !state.audioEnabled || state.muted) return;
     const now = ctx.currentTime;
@@ -1062,6 +1072,48 @@
     amp.connect(ctx.destination);
     osc.start(time);
     osc.stop(time + duration + 0.02);
+  }
+
+  function loadSoundEffects() {
+    state.soundFx.ping = makeAudio('./assets/sounds/chat-ping.wav');
+    state.soundFx.gong = makeAudio('./assets/sounds/chat-gong.wav');
+  }
+
+  function makeAudio(src) {
+    try {
+      const audio = new Audio(src);
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      return audio;
+    } catch {
+      return null;
+    }
+  }
+
+  async function primeSoundEffects() {
+    // Best-effort: load/prime local audio after a user gesture. Ignore failures.
+    const audios = [state.soundFx.ping, state.soundFx.gong].filter(Boolean);
+    for (const audio of audios) {
+      try {
+        audio.load();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  async function playSoundFile(kind) {
+    if (state.muted) return false;
+    const audio = state.soundFx[kind];
+    if (!audio) return false;
+    try {
+      const node = audio.cloneNode(true);
+      node.volume = kind === 'gong' ? 0.65 : 0.45;
+      await node.play();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function avatarSvgMarkup(avatarId) {
