@@ -863,6 +863,12 @@ textarea{ min-height: 140px; resize: vertical; }
   gap: 10px;
 }
 
+.chat-profile-avatar-row{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
 .chat-avatar-preview{
   width: 52px;
   height: 52px;
@@ -892,7 +898,7 @@ textarea{ min-height: 140px; resize: vertical; }
 
 .chat-room-list-wrap{
   margin-top: 2px;
-  max-height: 260px;
+  max-height: 348px; /* ~6 room rows */
   overflow:auto;
   border-radius: 12px;
   border: 1px solid rgba(120, 106, 255, .14);
@@ -941,6 +947,9 @@ textarea{ min-height: 140px; resize: vertical; }
   text-transform: uppercase;
   font-size: 12px;
   color: rgba(233,232,255,.94);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-room-btn-meta{
@@ -948,6 +957,9 @@ textarea{ min-height: 140px; resize: vertical; }
   font-family: var(--font-mono);
   font-size: 11px;
   color: rgba(188,184,255,.74);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-shortcuts{
@@ -976,6 +988,7 @@ textarea{ min-height: 140px; resize: vertical; }
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0;
   overflow:hidden;
+  height: min(72svh, 760px);
 }
 
 .chat-room-header{
@@ -1128,9 +1141,10 @@ textarea{ min-height: 140px; resize: vertical; }
     grid-template-columns: 1fr;
   }
   .chat-room-list-wrap{
-    max-height: 190px;
+    max-height: min(348px, 42svh);
   }
   .chat-main{
+    height: auto;
     min-height: min(70svh, 680px);
   }
   .chat-shell-head{

@@ -6,6 +6,7 @@
   const CHAT_MUTE_KEY = 'rg_chat_mute_v1';
   const CHAT_SESSION_KEY = 'rg_chat_session_v1';
   const MAX_MESSAGES_PER_ROOM = 500;
+  const VISIBLE_MESSAGES_PER_ROOM = 10;
   const DEFAULT_ROOM_NAME = 'lobby';
   const DEFAULT_STATUS_MS = 2200;
   const CHAT_PROTOCOL = 'rg-chat-v1';
@@ -385,7 +386,6 @@
     renderRooms();
     if (roomId === state.activeRoomId) {
       renderMessagesForActiveRoom();
-      scrollMessagesToBottom();
       playMessageSound(message);
     }
   }
@@ -687,21 +687,24 @@
     if (els.activeRoomName) els.activeRoomName.textContent = `#${room.name}`;
 
     const messages = Array.isArray(state.roomMessages[room.id]) ? state.roomMessages[room.id] : [];
-    const displayedCount = messages.length;
-    const total = Number(room.messageCount || displayedCount);
+    const loadedCount = messages.length;
+    const visibleCount = Math.min(loadedCount, VISIBLE_MESSAGES_PER_ROOM);
+    const total = Number(room.messageCount || loadedCount);
     if (els.roomMeta) {
-      if (total > displayedCount) {
-        els.roomMeta.textContent = `${total} messages (${displayedCount} loaded, max ${MAX_MESSAGES_PER_ROOM})`;
+      if (total > loadedCount) {
+        els.roomMeta.textContent = `${total} messages (${visibleCount} shown, ${loadedCount} loaded)`;
+      } else if (loadedCount > visibleCount) {
+        els.roomMeta.textContent = `${loadedCount} messages (${visibleCount} shown)`;
       } else {
-        els.roomMeta.textContent = `${displayedCount} message${displayedCount === 1 ? '' : 's'} (max ${MAX_MESSAGES_PER_ROOM})`;
+        els.roomMeta.textContent = `${visibleCount} message${visibleCount === 1 ? '' : 's'}`;
       }
     }
   }
 
   function renderMessagesForActiveRoom() {
     const roomId = state.activeRoomId || state.selectedRoomId;
-    const messages = Array.isArray(state.roomMessages[roomId]) ? state.roomMessages[roomId] : [];
-    renderMessages(messages);
+    const allMessages = Array.isArray(state.roomMessages[roomId]) ? state.roomMessages[roomId] : [];
+    renderMessages(allMessages.slice(-VISIBLE_MESSAGES_PER_ROOM));
   }
 
   function renderMessages(messages) {

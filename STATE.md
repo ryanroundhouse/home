@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-02-22
+- **Last updated**: 2026-02-25
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -17,7 +17,7 @@
   - `styles.css`, `script.js`, `chat.js`, `terminal.js`
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
-- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state).
+- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height, scrollable, auto-sticks to bottom only when already at bottom, and renders the last 10 messages for the active room.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)

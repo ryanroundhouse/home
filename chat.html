@@ -67,10 +67,6 @@
           <div>
             <div class="kicker">Chatroom</div>
             <h1 class="glow">Neon Lobby</h1>
-            <p class="chat-note" style="margin: 0">
-              WebSocket chat client targeting <span class="glow">wss://rgbot.graham.pub:8443</span>. Rooms and history are
-              expected to come from the backend (see `CHAT_BACKEND_WEBSOCKET_PROMPT.md`).
-            </p>
           </div>
           <div class="chat-status-wrap" aria-live="polite" aria-atomic="true">
             <span id="chatStatus" class="chip">Connecting…</span>
@@ -82,7 +78,10 @@
             <section class="chat-section">
               <div class="chat-section-title">Identity</div>
               <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
-                <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                <div class="chat-profile-avatar-row">
+                  <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                  <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
+                </div>
                 <div class="field" style="margin: 0">
                   <label for="chatNameInput">Name (no spaces)</label>
                   <input
@@ -98,7 +97,6 @@
                 </div>
                 <div class="chat-inline-actions" aria-label="Identity actions">
                   <button type="submit" class="btn primary chat-mini-btn">Save Name</button>
-                  <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
                 </div>
               </form>
             </section>
