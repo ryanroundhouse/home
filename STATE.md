@@ -17,7 +17,7 @@
   - `styles.css`, `script.js`, `chat.js`, `terminal.js`
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
-- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height, scrollable, auto-sticks to bottom only when already at bottom, and renders the last 10 messages for the active room.
+- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)

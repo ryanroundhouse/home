@@ -6,7 +6,6 @@
   const CHAT_MUTE_KEY = 'rg_chat_mute_v1';
   const CHAT_SESSION_KEY = 'rg_chat_session_v1';
   const MAX_MESSAGES_PER_ROOM = 500;
-  const VISIBLE_MESSAGES_PER_ROOM = 10;
   const DEFAULT_ROOM_NAME = 'lobby';
   const DEFAULT_STATUS_MS = 2200;
   const CHAT_PROTOCOL = 'rg-chat-v1';
@@ -55,6 +54,7 @@
 
     initForms();
     initRoomListInteractions();
+    renderShortcutHints();
     initShortcuts();
     loadSoundEffects();
     initAudioUnlock();
@@ -79,6 +79,20 @@
     els.composer = document.getElementById('chatComposer');
     els.messageInput = document.getElementById('chatMessageInput');
     els.muteToggle = document.getElementById('chatMuteToggle');
+    els.shortcutRoomFocus = document.getElementById('chatShortcutRoomFocus');
+    els.shortcutMsgFocus = document.getElementById('chatShortcutMsgFocus');
+    els.shortcutName = document.getElementById('chatShortcutName');
+    els.shortcutRoomJoin = document.getElementById('chatShortcutRoomJoin');
+    els.shortcutAvatar = document.getElementById('chatShortcutAvatar');
+  }
+
+  function renderShortcutHints() {
+    const isMac = isMacOs();
+    if (els.shortcutRoomFocus) els.shortcutRoomFocus.textContent = isMac ? 'Cmd+K' : 'Ctrl+K';
+    if (els.shortcutMsgFocus) els.shortcutMsgFocus.textContent = isMac ? 'Cmd+L' : 'Ctrl+L';
+    if (els.shortcutName) els.shortcutName.textContent = isMac ? 'Option+N' : 'Alt+N';
+    if (els.shortcutRoomJoin) els.shortcutRoomJoin.textContent = isMac ? 'Option+R' : 'Alt+R';
+    if (els.shortcutAvatar) els.shortcutAvatar.textContent = isMac ? 'Option+A' : 'Alt+A';
   }
 
   function initForms() {
@@ -688,15 +702,12 @@
 
     const messages = Array.isArray(state.roomMessages[room.id]) ? state.roomMessages[room.id] : [];
     const loadedCount = messages.length;
-    const visibleCount = Math.min(loadedCount, VISIBLE_MESSAGES_PER_ROOM);
     const total = Number(room.messageCount || loadedCount);
     if (els.roomMeta) {
       if (total > loadedCount) {
-        els.roomMeta.textContent = `${total} messages (${visibleCount} shown, ${loadedCount} loaded)`;
-      } else if (loadedCount > visibleCount) {
-        els.roomMeta.textContent = `${loadedCount} messages (${visibleCount} shown)`;
+        els.roomMeta.textContent = `${total} messages (${loadedCount} loaded, max ${MAX_MESSAGES_PER_ROOM})`;
       } else {
-        els.roomMeta.textContent = `${visibleCount} message${visibleCount === 1 ? '' : 's'}`;
+        els.roomMeta.textContent = `${loadedCount} message${loadedCount === 1 ? '' : 's'} (max ${MAX_MESSAGES_PER_ROOM})`;
       }
     }
   }
@@ -704,7 +715,7 @@
   function renderMessagesForActiveRoom() {
     const roomId = state.activeRoomId || state.selectedRoomId;
     const allMessages = Array.isArray(state.roomMessages[roomId]) ? state.roomMessages[roomId] : [];
-    renderMessages(allMessages.slice(-VISIBLE_MESSAGES_PER_ROOM));
+    renderMessages(allMessages);
   }
 
   function renderMessages(messages) {
@@ -1177,5 +1188,13 @@
   function cssEscape(value) {
     if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(value);
     return String(value).replace(/"/g, '\\"');
+  }
+
+  function isMacOs() {
+    const uaDataPlatform = navigator.userAgentData && typeof navigator.userAgentData.platform === 'string'
+      ? navigator.userAgentData.platform
+      : '';
+    const platform = String(uaDataPlatform || navigator.platform || navigator.userAgent || '');
+    return /mac/i.test(platform);
   }
 })();
