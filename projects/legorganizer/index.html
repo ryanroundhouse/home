@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Legorganizer — Project</title>
+    <meta name="description" content="Legorganizer project page with links to source and privacy policy." />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="module" src="../../script.js"></script>
+    <script type="module" src="../../terminal.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="../../index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Project</div>
+        <h1 class="glow">Legorganizer</h1>
+        <p>
+          Legorganizer is a local-first parts and bin organizer app.
+        </p>
+        <p class="muted">
+          The app is designed to run entirely on-device with no analytics, no tracking, and no data sent to external servers.
+        </p>
+
+        <div class="btn-row" aria-label="Project links" style="margin-top: 16px">
+          <a class="btn primary" href="https://github.com/ryanroundhouse/legorganizer" target="_blank" rel="noopener noreferrer">
+            View GitHub Repo
+          </a>
+          <a class="btn" href="./privacy-policy.html">Read Privacy Policy</a>
+        </div>
+
+        <p class="help" style="margin-bottom: 0">
+          Direct policy URL for store listing: <span class="glow">/projects/legorganizer/privacy-policy.html</span>
+        </p>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="input command or type help"
+            />
+          </div>
+          <div class="help">
+            Use <span class="glow">open projects</span> to return to the projects list.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

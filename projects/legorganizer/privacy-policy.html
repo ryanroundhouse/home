@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Legorganizer — Privacy Policy</title>
+    <meta name="description" content="Privacy Policy for Legorganizer." />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="module" src="../../script.js"></script>
+    <script type="module" src="../../terminal.js"></script>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="../../index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Legorganizer</div>
+        <h1 class="glow">Privacy Policy for Legorganizer</h1>
+        <p><strong>Effective date:</strong> March 3, 2026</p>
+
+        <p>Legorganizer is designed to run entirely on your device.</p>
+
+        <h2>Summary</h2>
+        <ul>
+          <li>Legorganizer does <strong>not</strong> collect personal information.</li>
+          <li>Legorganizer does <strong>not</strong> collect usage analytics.</li>
+          <li>Legorganizer does <strong>not</strong> access contacts, location, camera, microphone, photos, files outside app storage, or other device data.</li>
+          <li>Legorganizer does <strong>not</strong> send data to any server.</li>
+          <li>Legorganizer does <strong>not</strong> share data with third parties.</li>
+          <li>Legorganizer does <strong>not</strong> use advertising SDKs, tracking SDKs, or third-party analytics.</li>
+        </ul>
+
+        <h2>Data storage</h2>
+        <p>Any part/bin information you enter is stored locally on your device only (app-local storage). That data stays on your device unless you manually export it.</p>
+
+        <h2>Network activity</h2>
+        <p>Legorganizer does not require an account and does not make outbound network requests for app operation.</p>
+
+        <h2>Apple App Store (App Privacy) declaration</h2>
+        <p>For Apple's App Privacy labels, this app is intended to be submitted as:</p>
+        <ul>
+          <li><strong>Data Used to Track You:</strong> None</li>
+          <li><strong>Data Linked to You:</strong> None</li>
+          <li><strong>Data Not Linked to You:</strong> None</li>
+        </ul>
+
+        <h2>Google Play (Data Safety) declaration</h2>
+        <p>For Google Play Data Safety, this app is intended to be submitted as:</p>
+        <ul>
+          <li><strong>No data collected</strong></li>
+          <li><strong>No data shared</strong></li>
+          <li><strong>Data is processed only on device (if any user-entered content exists, it remains local unless user exports manually)</strong></li>
+        </ul>
+
+        <h2>Children's privacy</h2>
+        <p>Legorganizer does not knowingly collect personal data from anyone, including children, because it does not collect data from users.</p>
+
+        <h2>Changes to this policy</h2>
+        <p>If app behavior changes in a future release (for example, if cloud sync or analytics are added), this policy will be updated before that release.</p>
+
+        <h2>Contact</h2>
+        <p>For privacy questions, contact the developer through the contact method listed on the app's store page.</p>
+
+        <p class="help" style="margin-bottom: 0">
+          Back to <a href="./index.html">Legorganizer project page</a>.
+        </p>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="input command or type help"
+            />
+          </div>
+          <div class="help">
+            Use <span class="glow">open projects</span> to navigate.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
