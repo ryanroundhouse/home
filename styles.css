@@ -857,6 +857,22 @@ textarea{ min-height: 140px; resize: vertical; }
   margin-bottom: 10px;
 }
 
+.chat-section-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 8px;
+}
+
+.chat-section-title-row .chat-section-title{
+  margin-bottom: 0;
+}
+
+.chat-toggle-btn{
+  padding: 6px 9px;
+  font-size: 10px;
+}
+
 .chat-profile-form,
 .chat-room-form{
   display:grid;

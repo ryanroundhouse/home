@@ -2,6 +2,7 @@
   'use strict';
 
   const CHAT_PROFILE_KEY = 'rg_chat_profile_v1';
+  const CHAT_PROFILE_PANEL_COLLAPSED_KEY = 'rg_chat_profile_panel_collapsed_v1';
   const CHAT_ACTIVE_ROOM_KEY = 'rg_chat_active_room_v1';
   const CHAT_MUTE_KEY = 'rg_chat_mute_v1';
   const CHAT_SESSION_KEY = 'rg_chat_session_v1';
@@ -27,6 +28,7 @@
     pendingJoinRoomId: '',
     pendingCreateRoomName: '',
     sessionId: '',
+    profilePanelCollapsed: false,
     statusTimer: null,
     muted: false,
     userInteracted: false,
@@ -45,6 +47,7 @@
     if (!els.root) return;
 
     state.profile = loadProfile();
+    state.profilePanelCollapsed = loadProfilePanelCollapsed(state.profile);
     state.sessionId = loadSessionId();
     state.activeRoomId = loadActiveRoomId() || roomIdFromName(DEFAULT_ROOM_NAME);
     state.selectedRoomId = state.activeRoomId;
@@ -67,6 +70,8 @@
     els.root = document.querySelector('.chat-shell');
     els.status = document.getElementById('chatStatus');
     els.profileForm = document.getElementById('chatProfileForm');
+    els.profilePanelBody = document.getElementById('chatProfilePanelBody');
+    els.profileToggle = document.getElementById('chatProfileToggle');
     els.nameInput = document.getElementById('chatNameInput');
     els.avatarPreview = document.getElementById('chatAvatarPreview');
     els.rerollAvatar = document.getElementById('chatRerollAvatar');
@@ -81,18 +86,12 @@
     els.muteToggle = document.getElementById('chatMuteToggle');
     els.shortcutRoomFocus = document.getElementById('chatShortcutRoomFocus');
     els.shortcutMsgFocus = document.getElementById('chatShortcutMsgFocus');
-    els.shortcutName = document.getElementById('chatShortcutName');
-    els.shortcutRoomJoin = document.getElementById('chatShortcutRoomJoin');
-    els.shortcutAvatar = document.getElementById('chatShortcutAvatar');
   }
 
   function renderShortcutHints() {
     const isMac = isMacOs();
     if (els.shortcutRoomFocus) els.shortcutRoomFocus.textContent = isMac ? 'Cmd+K' : 'Ctrl+K';
     if (els.shortcutMsgFocus) els.shortcutMsgFocus.textContent = isMac ? 'Cmd+L' : 'Ctrl+L';
-    if (els.shortcutName) els.shortcutName.textContent = isMac ? 'Option+N' : 'Alt+N';
-    if (els.shortcutRoomJoin) els.shortcutRoomJoin.textContent = isMac ? 'Option+R' : 'Alt+R';
-    if (els.shortcutAvatar) els.shortcutAvatar.textContent = isMac ? 'Option+A' : 'Alt+A';
   }
 
   function initForms() {
@@ -107,6 +106,9 @@
 
     els.rerollAvatar?.addEventListener('click', () => {
       rerollAvatar();
+    });
+    els.profileToggle?.addEventListener('click', () => {
+      setProfilePanelCollapsed(!state.profilePanelCollapsed);
     });
 
     els.roomForm?.addEventListener('submit', (e) => {
@@ -176,23 +178,6 @@
         els.messageInput?.select();
         return;
       }
-      if (e.altKey && lower === 'n') {
-        e.preventDefault();
-        els.nameInput?.focus();
-        els.nameInput?.select();
-        return;
-      }
-      if (e.altKey && lower === 'r') {
-        e.preventDefault();
-        createOrJoinTypedRoom();
-        return;
-      }
-      if (e.altKey && lower === 'a') {
-        e.preventDefault();
-        rerollAvatar();
-        return;
-      }
-
       if (isTypingTarget) return;
 
       if (key === '[') {
@@ -543,6 +528,7 @@
     state.profile.name = normalizeDisplayName(raw);
     saveProfile();
     renderProfile();
+    setProfilePanelCollapsed(true);
     if (isSocketOpen()) {
       safeSend({ type: 'set_profile', name: state.profile.name, avatarId: state.profile.avatarId });
       setStatus(`Updating name to ${state.profile.name}…`);
@@ -557,6 +543,7 @@
     state.profile.avatarId = randomInt(1, 9999);
     saveProfile();
     renderProfile();
+    setProfilePanelCollapsed(true);
     if (isSocketOpen()) safeSend({ type: 'set_profile', name: state.profile.name, avatarId: state.profile.avatarId });
     setStatus('Avatar rerolled');
   }
@@ -617,6 +604,7 @@
 
   function renderAll() {
     renderProfile();
+    renderProfilePanel();
     renderMuteToggle();
     renderRooms();
     renderActiveRoom();
@@ -631,6 +619,14 @@
       els.avatarPreview.innerHTML = avatarSvgMarkup(state.profile.avatarId);
       els.avatarPreview.setAttribute('title', `Avatar ${state.profile.avatarId}`);
     }
+  }
+
+  function renderProfilePanel() {
+    if (!els.profilePanelBody || !els.profileToggle) return;
+    const collapsed = !!state.profilePanelCollapsed;
+    els.profilePanelBody.hidden = collapsed;
+    els.profileToggle.textContent = collapsed ? 'Edit' : 'Collapse';
+    els.profileToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
   }
 
   function renderMuteToggle() {
@@ -888,6 +884,36 @@
     return profile;
   }
 
+  function hasConfiguredProfile(profile) {
+    const name = String(profile?.name || '').trim();
+    return !!name && !/^guest\d{3}$/i.test(name);
+  }
+
+  function loadProfilePanelCollapsed(profile) {
+    try {
+      const raw = localStorage.getItem(CHAT_PROFILE_PANEL_COLLAPSED_KEY);
+      if (raw === '1') return true;
+      if (raw === '0') return false;
+    } catch {
+      // ignore
+    }
+    return hasConfiguredProfile(profile);
+  }
+
+  function saveProfilePanelCollapsed() {
+    try {
+      localStorage.setItem(CHAT_PROFILE_PANEL_COLLAPSED_KEY, state.profilePanelCollapsed ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  }
+
+  function setProfilePanelCollapsed(collapsed) {
+    state.profilePanelCollapsed = !!collapsed;
+    saveProfilePanelCollapsed();
+    renderProfilePanel();
+  }
+
   function saveProfile() {
     try {
       localStorage.setItem(CHAT_PROFILE_KEY, JSON.stringify(state.profile));
@@ -985,7 +1011,14 @@
 
   function formatMessageTime(ts) {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleString([], {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   function formatRoomListTime(ts) {

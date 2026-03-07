@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-03-03
+- **Last updated**: 2026-03-07
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -20,7 +20,7 @@
   - `projects/legorganizer/privacy-policy.html` (app privacy policy page)
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
-- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages.
+- `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages; message headers show full date+time; non-working Option/Alt identity shortcuts were removed; and the Identity panel is collapsible with persisted collapsed state after profile selection.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
   - `.cursorrules` (agent behavior + constraints)

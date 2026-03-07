@@ -76,29 +76,42 @@
         <div class="chat-layout">
           <aside class="chat-sidebar" aria-label="Rooms and profile">
             <section class="chat-section">
-              <div class="chat-section-title">Identity</div>
-              <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
-                <div class="chat-profile-avatar-row">
-                  <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
-                  <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
-                </div>
-                <div class="field" style="margin: 0">
-                  <label for="chatNameInput">Name (no spaces)</label>
-                  <input
-                    id="chatNameInput"
-                    name="chatName"
-                    type="text"
-                    maxlength="24"
-                    pattern="\\S+"
-                    autocapitalize="none"
-                    spellcheck="false"
-                    required
-                  />
-                </div>
-                <div class="chat-inline-actions" aria-label="Identity actions">
-                  <button type="submit" class="btn primary chat-mini-btn">Save Name</button>
-                </div>
-              </form>
+              <div class="chat-section-title-row">
+                <div class="chat-section-title">Identity</div>
+                <button
+                  type="button"
+                  id="chatProfileToggle"
+                  class="btn ghost chat-mini-btn chat-toggle-btn"
+                  aria-expanded="true"
+                  aria-controls="chatProfilePanelBody"
+                >
+                  Collapse
+                </button>
+              </div>
+              <div id="chatProfilePanelBody">
+                <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
+                  <div class="chat-profile-avatar-row">
+                    <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                    <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
+                  </div>
+                  <div class="field" style="margin: 0">
+                    <label for="chatNameInput">Name (no spaces)</label>
+                    <input
+                      id="chatNameInput"
+                      name="chatName"
+                      type="text"
+                      maxlength="24"
+                      pattern="\\S+"
+                      autocapitalize="none"
+                      spellcheck="false"
+                      required
+                    />
+                  </div>
+                  <div class="chat-inline-actions" aria-label="Identity actions">
+                    <button type="submit" class="btn primary chat-mini-btn">Save Name</button>
+                  </div>
+                </form>
+              </div>
             </section>
 
             <section class="chat-section">
@@ -131,9 +144,6 @@
               <ul class="chat-shortcuts" aria-label="Keyboard shortcuts">
                 <li><code id="chatShortcutRoomFocus">Ctrl/Cmd+K</code> room input</li>
                 <li><code id="chatShortcutMsgFocus">Ctrl/Cmd+L</code> message input</li>
-                <li><code id="chatShortcutName">Alt+N</code> name field</li>
-                <li><code id="chatShortcutRoomJoin">Alt+R</code> create/join typed room</li>
-                <li><code id="chatShortcutAvatar">Alt+A</code> reroll avatar</li>
                 <li><code>[</code> / <code>]</code> prev/next room</li>
                 <li><code>/emote &lt;text&gt;</code> emote message</li>
               </ul>

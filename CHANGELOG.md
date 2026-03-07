@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2026-03-07**: Updated chat UX: message timestamps now show full date + time, removed the non-working Option/Alt shortcut actions from both UI and key handlers, and made the Identity panel collapsible with persisted default-collapsed behavior after profile selection.
 - **2026-03-03**: Added a new `projects/legorganizer/` project page and linked it from `projects.html`, plus a dedicated `projects/legorganizer/privacy-policy.html` subpage with the provided app privacy policy text for store listing use.
 - **2026-02-25**: Adjusted chatroom message behavior after feedback: the chat panel remains fixed-height/scrollable but now renders all loaded room messages (instead of only the last 10) so users can scroll back through history; added OS-aware shortcut labels (`Cmd`/`Option` on macOS, `Ctrl`/`Alt` elsewhere) while keeping the keyboard shortcuts working.
 - **2026-02-25**: Refined chatroom UI behavior: the active chat pane now stays at a fixed height with internal scrolling, auto-scrolls on new messages only when the viewer is already near the bottom (prevents jitter), removes the WebSocket target blurb, moves “Reroll Avatar” beside the avatar preview, and caps the rooms list to ~6 visible entries with scrolling.
