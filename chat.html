@@ -78,6 +78,13 @@
             <section class="chat-section">
               <div class="chat-section-title-row">
                 <div class="chat-section-title">Identity</div>
+                <div class="chat-profile-summary">
+                  <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                  <div class="chat-profile-summary-meta">
+                    <div class="chat-profile-summary-label">Current</div>
+                    <div id="chatProfileSummaryName" class="chat-profile-summary-name">guest</div>
+                  </div>
+                </div>
                 <button
                   type="button"
                   id="chatProfileToggle"
@@ -87,13 +94,6 @@
                 >
                   Collapse
                 </button>
-              </div>
-              <div class="chat-profile-summary">
-                <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
-                <div class="chat-profile-summary-meta">
-                  <div class="chat-profile-summary-label">Current</div>
-                  <div id="chatProfileSummaryName" class="chat-profile-summary-name">guest</div>
-                </div>
               </div>
               <div id="chatProfilePanelBody">
                 <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
