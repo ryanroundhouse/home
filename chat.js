@@ -74,6 +74,7 @@
     els.profileToggle = document.getElementById('chatProfileToggle');
     els.nameInput = document.getElementById('chatNameInput');
     els.avatarPreview = document.getElementById('chatAvatarPreview');
+    els.profileSummaryName = document.getElementById('chatProfileSummaryName');
     els.rerollAvatar = document.getElementById('chatRerollAvatar');
     els.roomForm = document.getElementById('chatRoomForm');
     els.roomInput = document.getElementById('chatRoomInput');
@@ -614,6 +615,9 @@
     if (!state.profile) return;
     if (els.nameInput && document.activeElement !== els.nameInput) {
       els.nameInput.value = state.profile.name;
+    }
+    if (els.profileSummaryName) {
+      els.profileSummaryName.textContent = state.profile.name;
     }
     if (els.avatarPreview) {
       els.avatarPreview.innerHTML = avatarSvgMarkup(state.profile.avatarId);

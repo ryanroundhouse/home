@@ -88,12 +88,15 @@
                   Collapse
                 </button>
               </div>
+              <div class="chat-profile-summary">
+                <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
+                <div class="chat-profile-summary-meta">
+                  <div class="chat-profile-summary-label">Current</div>
+                  <div id="chatProfileSummaryName" class="chat-profile-summary-name">guest</div>
+                </div>
+              </div>
               <div id="chatProfilePanelBody">
                 <form id="chatProfileForm" class="chat-profile-form" autocomplete="off">
-                  <div class="chat-profile-avatar-row">
-                    <div class="chat-avatar-preview" id="chatAvatarPreview" aria-hidden="true"></div>
-                    <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
-                  </div>
                   <div class="field" style="margin: 0">
                     <label for="chatNameInput">Name (no spaces)</label>
                     <input
@@ -108,6 +111,7 @@
                     />
                   </div>
                   <div class="chat-inline-actions" aria-label="Identity actions">
+                    <button type="button" id="chatRerollAvatar" class="btn ghost chat-mini-btn">Reroll Avatar</button>
                     <button type="submit" class="btn primary chat-mini-btn">Save Name</button>
                   </div>
                 </form>
