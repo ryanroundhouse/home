@@ -6,6 +6,7 @@
   - Contact form: local-only (queue toast + clipboard fallback)
 */
 
+import { resolveDonationLink } from './lib/donationLinks.js';
 import { DEFAULT_THEME_ID, getThemeById, TERMINAL_THEME_STORAGE_KEY } from './lib/terminalThemes.js';
 
 (() => {
@@ -257,6 +258,18 @@ ${message}
     });
   };
 
+  /* -----------------------------
+   * Donation links (dev vs prod)
+   * ---------------------------*/
+  const initDonationLinks = () => {
+    $$('[data-donation-link]').forEach((link) => {
+      const liveUrl = link.getAttribute('data-live-url') || '';
+      const testUrl = link.getAttribute('data-test-url') || '';
+      const href = resolveDonationLink({ liveUrl, testUrl, locationLike: window.location });
+      if (href) link.setAttribute('href', href);
+    });
+  };
+
 
   /* -----------------------------
    * Boot
@@ -267,5 +280,6 @@ ${message}
     initMobileNav();
     initParallax();
     initContactForm();
+    initDonationLinks();
   });
 })();

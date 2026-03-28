@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#07060f" />
-    <title>Ryan Graham — About</title>
-    <meta name="description" content="About Ryan Graham — a short bio in a retro retrowave wrapper." />
+    <title>Ryan Graham — Donate</title>
+    <meta
+      name="description"
+      content="Support Ryan Graham's apps and experiments with a one-time donation through Stripe."
+    />
     <link rel="stylesheet" href="./styles.css" />
     <script type="module" src="./script.js"></script>
     <script type="module" src="./terminal.js"></script>
@@ -61,23 +64,61 @@
 
     <main id="main" class="wrap page">
       <div class="panel">
-        <div class="kicker">About</div>
-        <h1 class="glow">Bio</h1>
-        <p>
-          I build software, games, and experiments for fun and profit.
+        <div class="kicker">Support</div>
+        <h1 class="glow">Donate</h1>
+        <p style="margin-top: 0">
+          If my apps, experiments, or weird little internet projects have been useful, fun, or even mildly
+          entertaining, you can throw a few dollars my way here.
+        </p>
+        <p class="subtle">
+          The checkout is hosted by Stripe, and you can choose the amount you want to contribute on the next page.
         </p>
 
-        <p>
-          I’ve shipped production systems, life-style automations, and side projects like Moodful, usually by poking at tech until it does something interesting.
+        <div class="btn-row" aria-label="Donation actions">
+          <a
+            class="btn primary"
+            data-donation-link
+            data-live-url="https://donate.stripe.com/7sYaEYd18b2V7iz0tkdnW00"
+            data-test-url="https://buy.stripe.com/test_4gMfZj806ePa82S1cs1Jm00"
+            href="https://donate.stripe.com/7sYaEYd18b2V7iz0tkdnW00"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Donate with Stripe
+          </a>
+          <a class="btn ghost" href="./contact.html">Questions?</a>
+        </div>
+
+        <p class="help" style="margin-bottom: 0">
+          One-time support only for now. If you would rather reach out first, use the contact page.
         </p>
 
-        <p>
-          This site is my lab: half serious, half playful, fully curious.
-        </p>
+        <div class="cards" aria-label="Donation details">
+          <div class="card">
+            <h3>Secure Checkout</h3>
+            <p class="blurb">
+              Payments happen on Stripe’s hosted checkout page rather than on this site.
+            </p>
+          </div>
 
-        <p class="muted" style="margin-bottom: 0">
-          I get obsessed with an idea and love AI for fast prototyping, exploring them, and sharing the results.
-        </p>
+          <div class="card">
+            <h3>Choose Any Amount</h3>
+            <p class="blurb">
+              Enter whatever amount feels right. It is set up as a pay-what-you-want donation flow.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>What It Supports</h3>
+            <p class="blurb">
+              Hosting, app maintenance, side projects, experiments, and the occasional poorly supervised idea.
+            </p>
+          </div>
+        </div>
+
+        <div class="footer">
+          Tip: open the terminal and try <span class="glow">open contact</span>.
+        </div>
       </div>
     </main>
 
@@ -115,15 +156,14 @@
               autocomplete="off"
               autocapitalize="none"
               spellcheck="false"
-              placeholder="input command or type help"
+              placeholder="help, open about, whoami…"
             />
           </div>
           <div class="help">
-            Tip: try <span class="glow">open projects</span> or <span class="glow">whoami</span>.
+            Tip: try <span class="glow">open projects</span> or <span class="glow">help</span>.
           </div>
         </div>
       </div>
     </div>
   </body>
 </html>
-

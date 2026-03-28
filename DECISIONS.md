@@ -226,6 +226,17 @@
   - The chat page can support real multi-user realtime chat once the backend is deployed.
   - This intentionally introduces a new network dependency for the chat page (WebSocket connection), which is a scoped exception to the site’s prior no-network-chat behavior.
 
+### ADR-0015 — Donations use a Stripe-hosted pay-what-you-want page
+- **Status**: Accepted
+- **Date**: 2026-03-27
+- **Context**: We want a donation page that fits the site visually while letting visitors choose their own one-time amount without adding a backend or embedding payment collection directly in this static repo.
+- **Decision**:
+  - Add a local `donate.html` landing page that explains the donation flow and links out to a Stripe-hosted checkout/payment link.
+  - Keep the website itself static and dependency-free; Stripe handles amount entry and payment collection on the hosted page.
+- **Consequences**:
+  - The site keeps its simple vanilla HTML/CSS/JS architecture and avoids introducing Stripe.js or server-side session creation.
+  - The live donation URL is external configuration that must be maintained in the page CTA.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

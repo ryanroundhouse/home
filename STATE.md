@@ -13,13 +13,15 @@
 
 ## Directory layout (high level)
 - **Root**: static site pages + shared assets
-  - `index.html`, `about.html`, `projects.html`, `chat.html`, `contact.html`, `links.html`
+  - `index.html`, `about.html`, `projects.html`, `chat.html`, `contact.html`, `links.html`, `donate.html`
   - `styles.css`, `script.js`, `chat.js`, `terminal.js`
 - **Project subpages**:
   - `projects/legorganizer/index.html` (project landing page)
   - `projects/legorganizer/privacy-policy.html` (app privacy policy page)
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
+- `donate.html` is a Stripe-hosted donation landing page styled to match the site; when served locally on `localhost`, `127.0.0.1`, or `file:`, the primary CTA switches to the Stripe test payment link automatically, while production hosts keep the live link.
+- The primary site header/mobile nav now includes a `Donate` link across all top-level pages and project subpages.
 - `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages; message headers show full date+time; non-working Option/Alt identity shortcuts were removed; and the Identity panel is collapsible with persisted collapsed state after profile selection while still showing avatar + current name in one horizontal row.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
@@ -73,8 +75,10 @@
 ├── CHAT_BACKEND_WEBSOCKET_PROMPT.md
 ├── DECISIONS.md
 ├── STATE.md
+├── donate.html
 ├── package.json
 ├── lib/
+│   ├── donationLinks.js
 │   ├── slugify.js
 │   ├── memoryInjectionDiff.js
 │   ├── memoryInjectionGame.js
@@ -110,6 +114,7 @@
 ├── terminal.js
 ├── background1.gif
 └── tests/
+    ├── donationLinks.test.js
     ├── slugify.test.js
     ├── memoryInjectionDiff.test.js
     ├── terminalThemes.test.js
