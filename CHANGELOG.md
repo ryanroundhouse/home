@@ -1,6 +1,7 @@
 ## Agent change log
 
 ### Unreleased
+- **2026-04-07**: Added a new `projects/turfwars/` project page and linked it from `projects.html`, plus a dedicated `projects/turfwars/privacy-policy.html` subpage containing the provided Turf Wars privacy policy details for app/privacy listing use.
 - **2026-03-27**: Added `Donate` to the primary header and mobile navigation across all site pages and project subpages so the donation page is easy to reach from anywhere on the site.
 - **2026-03-27**: The donation page now automatically uses the Stripe test payment link when the site is run locally on `localhost`, `127.0.0.1`, or `file:`, while keeping the live donation link on production hosts. Added a small shared helper and tests for the environment switch.
 - **2026-03-27**: Added a new `donate.html` page styled like the rest of the site for one-time support via Stripe’s hosted checkout flow, so app users can land on a dedicated donation page without adding Stripe.js or a backend to the site.

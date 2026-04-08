@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-03-07
+- **Last updated**: 2026-04-07
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -18,10 +18,13 @@
 - **Project subpages**:
   - `projects/legorganizer/index.html` (project landing page)
   - `projects/legorganizer/privacy-policy.html` (app privacy policy page)
+  - `projects/turfwars/index.html` (project landing page)
+  - `projects/turfwars/privacy-policy.html` (app privacy policy page)
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
 - `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
 - `donate.html` is a Stripe-hosted donation landing page styled to match the site; when served locally on `localhost`, `127.0.0.1`, or `file:`, the primary CTA switches to the Stripe test payment link automatically, while production hosts keep the live link.
 - The primary site header/mobile nav now includes a `Donate` link across all top-level pages and project subpages.
+- `projects.html` now includes a Turf Wars card linking to a dedicated project page and a privacy policy subpage for app-store/privacy disclosure use.
 - `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages; message headers show full date+time; non-working Option/Alt identity shortcuts were removed; and the Identity panel is collapsible with persisted collapsed state after profile selection while still showing avatar + current name in one horizontal row.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
@@ -102,7 +105,10 @@
 ├── about.html
 ├── projects.html
 ├── projects/
-│   └── legorganizer/
+│   ├── legorganizer/
+│   │   ├── index.html
+│   │   └── privacy-policy.html
+│   └── turfwars/
 │       ├── index.html
 │       └── privacy-policy.html
 ├── chat.html
