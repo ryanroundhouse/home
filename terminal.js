@@ -484,6 +484,8 @@ import {
         chat: 'chat.html',
         contact: 'contact.html',
         links: 'links.html',
+        citydrive: 'projects/citydrive/index.html',
+        drive: 'projects/citydrive/index.html',
       };
       const dest = map[p];
       if (!dest) return false;
@@ -1528,9 +1530,10 @@ import {
     const printProjects = () => {
       lineHTML(
         `Featured projects:
-<br>1) <a href="https://moodful.ca" target="_self" rel="noopener">Moodful.ca</a> — mood tracking app
-<br>2) <a href="https://github.com/USERNAME/REPO1" target="_self" rel="noopener">GitHub Repo 1</a> — placeholder blurb
-<br>3) <a href="https://github.com/USERNAME/REPO2" target="_self" rel="noopener">GitHub Repo 2</a> — placeholder blurb`,
+<br>1) <a href="projects/citydrive/index.html" target="_self" rel="noopener">City Drive</a> — 3D drive through Berwick Ave (try: <span class="glow">open drive</span>)
+<br>2) <a href="https://moodful.ca" target="_self" rel="noopener">Moodful.ca</a> — mood tracking app
+<br>3) <a href="https://github.com/USERNAME/REPO1" target="_self" rel="noopener">GitHub Repo 1</a> — placeholder blurb
+<br>4) <a href="https://github.com/USERNAME/REPO2" target="_self" rel="noopener">GitHub Repo 2</a> — placeholder blurb`,
         'ok'
       );
     };
@@ -1911,11 +1914,11 @@ import {
           break;
         case 'open':
           if (!arg) {
-            line('usage: open <home|about|projects|chat|contact|links|moodful.ca>', 'err');
+            line('usage: open <home|about|projects|chat|contact|links|drive|moodful.ca>', 'err');
             break;
           }
           if (!openPage(arg) && !openExternal(arg)) {
-            line(`unknown target "${arg}". Try: home, about, projects, contact, links, moodful.ca`, 'err');
+            line(`unknown target "${arg}". Try: home, about, projects, contact, links, drive, moodful.ca`, 'err');
           }
           break;
         case 'theme':

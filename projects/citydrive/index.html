@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>City Drive — Project</title>
+    <meta
+      name="description"
+      content="City Drive — a browser-based 3D drive through Berwick Avenue, Ottawa, built from open data and baked Street View facades."
+    />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="module" src="../../script.js"></script>
+    <script type="module" src="../../terminal.js"></script>
+    <style>
+      .cd-hero {
+        position: relative;
+        margin: 18px 0 22px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(120, 220, 255, 0.35);
+        box-shadow: 0 0 0 1px rgba(120, 220, 255, 0.12),
+          0 0 28px rgba(80, 200, 255, 0.22), inset 0 0 60px rgba(0, 0, 0, 0.45);
+        line-height: 0;
+      }
+      .cd-hero img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      /* CRT vignette + neon wash so the screenshot sits inside the theme */
+      .cd-hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+            120% 90% at 50% 35%,
+            transparent 55%,
+            rgba(7, 6, 15, 0.55) 100%
+          ),
+          linear-gradient(
+            180deg,
+            rgba(120, 80, 255, 0.1) 0%,
+            transparent 30%,
+            transparent 70%,
+            rgba(10, 8, 20, 0.65) 100%
+          );
+      }
+      .cd-hero figcaption {
+        position: absolute;
+        left: 12px;
+        bottom: 10px;
+        z-index: 2;
+        line-height: 1.2;
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: rgba(7, 6, 15, 0.6);
+        border: 1px solid rgba(120, 220, 255, 0.25);
+        backdrop-filter: blur(3px);
+      }
+      .cd-specs {
+        list-style: none;
+        margin: 18px 0 4px;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+      }
+      .cd-specs li {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .cd-specs .k {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.65;
+        margin-bottom: 3px;
+      }
+    </style>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="../../index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../donate.html">Donate</a>
+            <a href="../../links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../donate.html">Donate</a>
+            <a href="../../links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Project</div>
+        <h1 class="glow">City Drive</h1>
+
+        <figure class="cd-hero">
+          <img
+            src="./hero.png"
+            alt="First-person view driving down Berwick Avenue in City Drive — photo-textured houses, low-poly trees, and the street name embossed on the road."
+            width="2000"
+            height="1073"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption class="glow">Spawned on Berwick Avenue, Ottawa</figcaption>
+        </figure>
+
+        <p>
+          City Drive is a browser-based 3D driving simulator for
+          <strong>Berwick Avenue, Ottawa</strong> — the street I grew up on. Drive at
+          sedan eye-height through a real neighbourhood: building footprints and
+          heights come straight from City of Ottawa and Province of Ontario open
+          data, draped over free terrain, with select walls skinned in
+          <strong>rectified Street View photo facades</strong> baked offline.
+        </p>
+        <p class="muted">
+          There's no physics and no collision — the camera is surface-locked to the
+          terrain and moves with car-like kinematics (momentum, speed-coupled
+          steering). It's a contemplative drive-around, not a racing game. Everything
+          runs on free, pre-baked data: no Cesium ion token and no live Google APIs
+          at runtime.
+        </p>
+
+        <ul class="cd-specs" aria-label="Project details">
+          <li><span class="k">Stack</span>Vite + CesiumJS + TypeScript</li>
+          <li><span class="k">World</span>Ottawa LOD1 buildings + LiDAR heights</li>
+          <li><span class="k">Facades</span>Street View, projected &amp; baked offline</li>
+          <li><span class="k">Runtime cost</span>None — all data ships static</li>
+        </ul>
+
+        <div class="btn-row" aria-label="Project links" style="margin-top: 20px">
+          <a
+            class="btn primary"
+            href="https://city-drive.graham.pub"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Launch the drive →</a
+          >
+          <a class="btn" href="../../contact.html">Contact</a>
+        </div>
+
+        <p class="help" style="margin-bottom: 0">
+          Controls: <span class="glow">W/A/S/D</span> or arrows to drive,
+          <span class="glow">Space</span> to handbrake, <span class="glow">R</span> to
+          reset. Tip: from the terminal, run <span class="glow">open drive</span>.
+        </p>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="input command or type help"
+            />
+          </div>
+          <div class="help">
+            Use <span class="glow">open projects</span> to return to the projects list.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
