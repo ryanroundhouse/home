@@ -486,6 +486,7 @@ import {
         links: 'links.html',
         citydrive: 'projects/citydrive/index.html',
         drive: 'projects/citydrive/index.html',
+        zozo: 'projects/zozo/index.html',
       };
       const dest = map[p];
       if (!dest) return false;
@@ -1531,9 +1532,10 @@ import {
       lineHTML(
         `Featured projects:
 <br>1) <a href="projects/citydrive/index.html" target="_self" rel="noopener">City Drive</a> — 3D drive through Berwick Ave (try: <span class="glow">open drive</span>)
-<br>2) <a href="https://moodful.ca" target="_self" rel="noopener">Moodful.ca</a> — mood tracking app
-<br>3) <a href="https://github.com/USERNAME/REPO1" target="_self" rel="noopener">GitHub Repo 1</a> — placeholder blurb
-<br>4) <a href="https://github.com/USERNAME/REPO2" target="_self" rel="noopener">GitHub Repo 2</a> — placeholder blurb`,
+<br>2) <a href="projects/zozo/index.html" target="_self" rel="noopener">Zozo</a> — agent-orchestration harness (try: <span class="glow">open zozo</span>)
+<br>3) <a href="https://moodful.ca" target="_self" rel="noopener">Moodful.ca</a> — mood tracking app
+<br>4) <a href="https://github.com/USERNAME/REPO1" target="_self" rel="noopener">GitHub Repo 1</a> — placeholder blurb
+<br>5) <a href="https://github.com/USERNAME/REPO2" target="_self" rel="noopener">GitHub Repo 2</a> — placeholder blurb`,
         'ok'
       );
     };

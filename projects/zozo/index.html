@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07060f" />
+    <title>Zozo — Project</title>
+    <meta
+      name="description"
+      content="Zozo — a TypeScript harness that drives subscription-backed coding agents (Claude Code, Codex) programmatically, with a durable event journal, a live dashboard, and an autonomous GitHub issue loop."
+    />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="module" src="../../script.js"></script>
+    <script type="module" src="../../terminal.js"></script>
+    <style>
+      .zz-term {
+        position: relative;
+        margin: 18px 0 22px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(120, 220, 255, 0.35);
+        box-shadow: 0 0 0 1px rgba(120, 220, 255, 0.12),
+          0 0 28px rgba(80, 200, 255, 0.22), inset 0 0 60px rgba(0, 0, 0, 0.45);
+        background: rgba(7, 6, 15, 0.75);
+        font-family: "Courier New", monospace;
+      }
+      .zz-term .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .zz-term .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      .zz-term .dot.r { background: #ff5f57; }
+      .zz-term .dot.y { background: #febc2e; }
+      .zz-term .dot.g { background: #28c840; }
+      .zz-term .title {
+        margin-left: 8px;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        opacity: 0.7;
+      }
+      .zz-term pre {
+        margin: 0;
+        padding: 14px 16px 16px;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .zz-specs {
+        list-style: none;
+        margin: 18px 0 4px;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+      }
+      .zz-specs li {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .zz-specs .k {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.65;
+        margin-bottom: 3px;
+      }
+    </style>
+  </head>
+  <body class="crt">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wrap">
+        <div class="bar" data-nav>
+          <a class="brand" href="../../index.html">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="name">Ryan Graham</span>
+          </a>
+
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../donate.html">Donate</a>
+            <a href="../../links.html">Links</a>
+          </nav>
+
+          <button
+            id="navToggle"
+            class="hamburger"
+            type="button"
+            aria-controls="mobileNav"
+            aria-expanded="false"
+          >
+            <span class="icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            Menu
+          </button>
+        </div>
+
+        <div id="mobileNav" class="mobile-nav" hidden>
+          <div class="sheet" role="navigation" aria-label="Mobile navigation">
+            <a href="../../index.html">Home</a>
+            <a href="../../about.html">About</a>
+            <a href="../../projects.html">Projects</a>
+            <a href="../../chat.html">Chat</a>
+            <a href="../../contact.html">Contact</a>
+            <a href="../../donate.html">Donate</a>
+            <a href="../../links.html">Links</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="wrap page">
+      <div class="panel">
+        <div class="kicker">Project</div>
+        <h1 class="glow">Zozo</h1>
+
+        <div class="zz-term" aria-hidden="true">
+          <div class="bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="title">zozo — dispatcher</span>
+          </div>
+          <pre>$ zozo watch ryanroundhouse/home
+[dispatcher] issue #2 labeled ready-for-agent
+[dispatcher] spawning agent in isolated worktree...
+[thread run_8f21] agent: reading issue, planning changes
+[thread run_8f21] agent: writing projects/zozo/index.html
+[thread run_8f21] agent: tests green, opening PR
+[dispatcher] PR opened — awaiting review</pre>
+        </div>
+
+        <p>
+          Zozo is a TypeScript harness for driving subscription-backed coding
+          agents — <strong>Claude Code</strong> and <strong>Codex</strong> —
+          programmatically instead of by hand. Every conversation with an
+          agent is a durable <strong>thread</strong>, made up of
+          <strong>runs</strong> whose events are appended to a SQLite event
+          journal. Streaming, resuming a dropped connection, and rendering
+          history are all just reads of that journal — there's no separate
+          "live" state to fall out of sync.
+        </p>
+        <p>
+          A web dashboard sits on top: a live view of threads, runs, and
+          streaming agent events, plus project configuration and credential
+          provisioning for the agent runtimes and GitHub.
+        </p>
+        <p class="muted">
+          The most autonomous piece is the <strong>issue loop</strong> — a
+          dispatcher that watches configured GitHub repos for issues labeled
+          <code>ready-for-agent</code>, hands each one to a coding agent in an
+          isolated git worktree, and opens (or auto-merges) the resulting
+          pull request. Fun fact: this very project page was requested as a
+          GitHub issue and implemented end-to-end by Zozo itself.
+        </p>
+
+        <ul class="zz-specs" aria-label="Project details">
+          <li><span class="k">Stack</span>TypeScript</li>
+          <li><span class="k">Storage</span>Append-only SQLite event journal</li>
+          <li><span class="k">Agents</span>Claude Code, Codex</li>
+          <li><span class="k">Automation</span>Label-driven GitHub issue loop</li>
+        </ul>
+
+        <div class="btn-row" aria-label="Project links" style="margin-top: 20px">
+          <a
+            class="btn primary"
+            href="https://github.com/ryanroundhouse/zozo"
+            target="_blank"
+            rel="noopener noreferrer"
+            >View on GitHub →</a
+          >
+          <a class="btn" href="../../contact.html">Contact</a>
+        </div>
+
+        <p class="help" style="margin-bottom: 0">
+          Tip: from the terminal, run <span class="glow">open zozo</span>.
+        </p>
+      </div>
+    </main>
+
+    <div class="term-fab">
+      <button type="button" data-open-terminal aria-haspopup="dialog" aria-controls="terminalOverlay">
+        Terminal
+      </button>
+    </div>
+
+    <div id="terminalOverlay" class="term-overlay" hidden aria-hidden="true">
+      <div
+        id="terminalDialog"
+        class="terminal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Terminal"
+      >
+        <div class="titlebar">
+          <div class="title">RG/OS Terminal</div>
+          <div class="actions">
+            <span id="terminalHint" class="chip">type: help</span>
+            <button id="terminalClose" class="close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div id="terminalOutput" class="term-output" role="log" aria-live="polite" aria-relevant="additions"></div>
+          <div class="term-input">
+            <span class="prompt" aria-hidden="true">rg@arcade:~$</span>
+            <label class="sr-only" for="terminalInput">Terminal input</label>
+            <input
+              id="terminalInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="input command or type help"
+            />
+          </div>
+          <div class="help">
+            Use <span class="glow">open projects</span> to return to the projects list.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
