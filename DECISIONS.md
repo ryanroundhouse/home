@@ -237,6 +237,17 @@
   - The site keeps its simple vanilla HTML/CSS/JS architecture and avoids introducing Stripe.js or server-side session creation.
   - The live donation URL is external configuration that must be maintained in the page CTA.
 
+### ADR-0016 — About page references curated projects via plain inline links
+- **Status**: Accepted
+- **Date**: 2026-07-08
+- **Context**: The About bio already name-drops Moodful in prose; we want to also surface Zozo, City Drive, and Turf Wars without turning the About page into a second project grid.
+- **Decision**:
+  - Reference the three projects as plain inline `<a>` links woven into the existing bio paragraphs, styled the same as any other paragraph link (no new CSS classes, no card/tag markup).
+  - Hardcode each link's `href` directly in `about.html` (`projects/zozo/index.html`, `projects/citydrive/index.html`, `projects/turfwars/index.html`) rather than introducing a shared data module — three static links don't justify an abstraction.
+- **Consequences**:
+  - About stays a simple bio page; the curated project grid remains the sole responsibility of `projects.html`.
+  - Adding/renaming a featured project means updating both `about.html` and `projects.html` by hand (acceptable at this scale).
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.
