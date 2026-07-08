@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-04-07
+- **Last updated**: 2026-07-08
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -25,6 +25,7 @@
 - `donate.html` is a Stripe-hosted donation landing page styled to match the site; when served locally on `localhost`, `127.0.0.1`, or `file:`, the primary CTA switches to the Stripe test payment link automatically, while production hosts keep the live link.
 - The primary site header/mobile nav now includes a `Donate` link across all top-level pages and project subpages.
 - `projects.html` now includes a Turf Wars card linking to a dedicated project page and a privacy policy subpage for app-store/privacy disclosure use.
+- `about.html`'s bio references the curated projects (Zozo, City Drive, Turf Wars) as plain inline links to their `projects/<slug>/index.html` pages, mirroring the existing Moodful mention (see `DECISIONS.md` ADR-0016).
 - `chat.html` is a WebSocket chat client targeting `wss://rgbot.graham.pub:8443` (backend expected; frontend keeps local profile/name/avatar and UI state). The message pane is fixed-height and scrollable (about 10 messages visible at a time), auto-sticks to bottom only when already at bottom, and lets you scroll through all loaded room messages; message headers show full date+time; non-working Option/Alt identity shortcuts were removed; and the Identity panel is collapsible with persisted collapsed state after profile selection while still showing avatar + current name in one horizontal row.
 - `CHAT_BACKEND_WEBSOCKET_PROMPT.md` documents the backend protocol + requirements so frontend/backend can be built concurrently.
 - **Root tooling**:
