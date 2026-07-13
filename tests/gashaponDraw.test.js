@@ -58,3 +58,33 @@ test('pickNextCapsule: defaults to the real gashapon catalog ids', () => {
   const picked = pickNextCapsule('2026-07-12', []);
   assert.ok(GASHAPON_CATALOG_IDS.includes(picked));
 });
+
+test('pickNextCapsule: against the full 32-piece catalog, draws all 32 distinct ids before any repeat, then reshuffles', () => {
+  assert.equal(GASHAPON_CATALOG_IDS.length, 32);
+
+  // First full cycle: every draw must be a not-yet-seen id, and by the end
+  // every catalog id has been drawn exactly once.
+  let owned = [];
+  const firstCycle = [];
+  for (let i = 0; i < GASHAPON_CATALOG_IDS.length; i++) {
+    const next = pickNextCapsule('2026-07-12', owned);
+    assert.ok(next, 'should always draw something while catalog ids remain');
+    assert.ok(!firstCycle.includes(next), `capsule ${next} was drawn twice within the first cycle`);
+    firstCycle.push(next);
+    owned.push(next);
+  }
+  assert.deepEqual([...firstCycle].sort(), [...GASHAPON_CATALOG_IDS].sort());
+
+  // Second cycle: still a full permutation of the catalog, but the combined
+  // owned list now legitimately contains repeats (the reshuffle).
+  const secondCycle = [];
+  for (let i = 0; i < GASHAPON_CATALOG_IDS.length; i++) {
+    const next = pickNextCapsule('2026-07-12', owned);
+    secondCycle.push(next);
+    owned.push(next);
+  }
+  assert.deepEqual([...secondCycle].sort(), [...GASHAPON_CATALOG_IDS].sort());
+  assert.equal(owned.length, GASHAPON_CATALOG_IDS.length * 2);
+  const counts = owned.reduce((acc, id) => ({ ...acc, [id]: (acc[id] || 0) + 1 }), {});
+  assert.ok(Object.values(counts).some((n) => n > 1), 'expected at least one id to repeat after a full cycle');
+});
