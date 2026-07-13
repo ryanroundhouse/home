@@ -353,7 +353,17 @@ ${message}
         updateButtonState();
 
         const capsule = getCapsuleById(capsuleId);
-        openGashaponCapsuleModal({ name: capsule?.name, svg: capsule?.svg });
+        openGashaponCapsuleModal({
+          name: capsule?.name,
+          svg: capsule?.svg,
+          onClose: () => {
+            try {
+              btn.focus();
+            } catch {
+              // no-op
+            }
+          },
+        });
       });
     } catch {
       // Best-effort: if storage/DOM access is blocked, skip gashapon silently.
