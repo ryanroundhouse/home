@@ -1569,6 +1569,14 @@ import {
     const resetAdventureState = () => {
       // Remove persisted state so the next open looks like a first boot.
       // Keep this list explicit so we don't accidentally wipe unrelated keys.
+      //
+      // NOTE for future agents: the gashapon capsule storage key
+      // (see GASHAPON_STORAGE_KEY in lib/gashaponStorage.js) is
+      // INTENTIONALLY NOT included here. The hidden gashapon capsule
+      // collection is real-calendar meta-progression, not part of the
+      // terminal's resettable adventure/save-state — see DECISIONS.md ADR
+      // "Hidden daily gashapon machine + footer capsule collection".
+      // Do not add its storage key to this wipe list.
       const keys = [
         // theme
         TERMINAL_THEME_STORAGE_KEY,

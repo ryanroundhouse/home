@@ -8,6 +8,17 @@
 
 import { resolveDonationLink } from './lib/donationLinks.js';
 import { DEFAULT_THEME_ID, getThemeById, TERMINAL_THEME_STORAGE_KEY } from './lib/terminalThemes.js';
+import { GASHAPON_ELIGIBLE_PAGES, normalizeGashaponPagePath, isPrivacyPolicyPage } from './lib/gashaponPages.js';
+import { pickDailySpawn } from './lib/gashaponSpawn.js';
+import { pickNextCapsule } from './lib/gashaponDraw.js';
+import { gashaponCatalog, getCapsuleById } from './lib/gashaponData.js';
+import {
+  loadGashaponState,
+  hasClaimedToday,
+  claimCapsule,
+  getLocalDateString,
+} from './lib/gashaponStorage.js';
+import { openGashaponCapsuleModal } from './lib/gashaponModal.js';
 
 (() => {
   'use strict';
@@ -272,6 +283,84 @@ ${message}
 
 
   /* -----------------------------
+   * Gashapon (hidden daily capsule machine)
+   * ---------------------------*/
+  const initGashapon = () => {
+    try {
+      const todayStr = getLocalDateString(new Date());
+      const currentPage = normalizeGashaponPagePath(window.location.pathname);
+      const spawnPage = pickDailySpawn(todayStr, GASHAPON_ELIGIBLE_PAGES);
+
+      // Always render the persistent footer capsule tray (it only becomes
+      // visible once the first capsule is owned), regardless of whether
+      // today's trigger button spawns on this page.
+      const footer = document.createElement('div');
+      footer.id = 'gashaponFooter';
+      footer.className = 'gashapon-footer';
+      document.body.appendChild(footer);
+
+      const tray = document.createElement('div');
+      tray.className = 'gashapon-tray';
+      tray.hidden = true;
+      footer.appendChild(tray);
+
+      const renderTray = (state) => {
+        const owned = (state.ownedIds || [])
+          .map((id) => getCapsuleById(id))
+          .filter(Boolean);
+        if (owned.length === 0) {
+          tray.hidden = true;
+          tray.innerHTML = '';
+          return;
+        }
+        tray.hidden = false;
+        tray.innerHTML = owned
+          .map((c) => `<span class="gashapon-tray-item" title="${c.name}">${c.svg}</span>`)
+          .join('');
+      };
+
+      let state = loadGashaponState(window.localStorage);
+      renderTray(state);
+
+      // No spawn today, we're not on the spawned page, or (belt-and-braces)
+      // we're on an excluded privacy-policy subpage: no trigger button.
+      if (!spawnPage || currentPage !== spawnPage || isPrivacyPolicyPage(currentPage)) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gashapon-trigger';
+      btn.setAttribute('aria-label', 'unidentified device');
+      footer.appendChild(btn);
+
+      const updateButtonState = () => {
+        const claimed = hasClaimedToday(state, todayStr);
+        btn.disabled = claimed;
+        btn.setAttribute('aria-disabled', String(claimed));
+      };
+      updateButtonState();
+
+      btn.addEventListener('click', () => {
+        if (hasClaimedToday(state, todayStr)) return;
+        const catalogIds = gashaponCatalog.map((c) => c.id);
+        const capsuleId = pickNextCapsule(todayStr, state.ownedIds, catalogIds);
+        if (!capsuleId) return;
+
+        const result = claimCapsule(window.localStorage, { id: capsuleId, dateStr: todayStr });
+        if (!result.changed) return;
+
+        state = result.state;
+        renderTray(state);
+        updateButtonState();
+
+        const capsule = getCapsuleById(capsuleId);
+        openGashaponCapsuleModal({ name: capsule?.name, svg: capsule?.svg });
+      });
+    } catch {
+      // Best-effort: if storage/DOM access is blocked, skip gashapon silently.
+    }
+  };
+
+  /* -----------------------------
    * Boot
    * ---------------------------*/
   document.addEventListener('DOMContentLoaded', () => {
@@ -281,5 +370,6 @@ ${message}
     initParallax();
     initContactForm();
     initDonationLinks();
+    initGashapon();
   });
 })();
