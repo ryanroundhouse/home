@@ -1520,19 +1520,110 @@ textarea{ min-height: 140px; resize: vertical; }
   border: 1px solid color-mix(in srgb, var(--cyan) 20%, transparent);
   background: color-mix(in srgb, var(--bg0) 70%, transparent);
   box-shadow: 0 8px 22px rgba(0,0,0,.40);
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
 .gashapon-tray[hidden]{ display: none; }
 .gashapon-tray-item{
+  position: relative;
   display: inline-flex;
   width: 20px;
   height: 20px;
+  border-radius: 50%;
   color: color-mix(in srgb, var(--cyan) 82%, var(--ink));
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 30%, transparent));
+  cursor: default;
+  transition: color .16s ease, filter .16s ease, transform .16s ease;
 }
 .gashapon-tray-item svg{
   width: 100%;
   height: 100%;
   display: block;
+}
+.gashapon-tray-item:hover,
+.gashapon-tray-item:focus-visible{
+  color: color-mix(in srgb, var(--cyan) 96%, white);
+  filter:
+    drop-shadow(0 0 8px color-mix(in srgb, var(--cyan) 55%, transparent))
+    drop-shadow(0 0 4px color-mix(in srgb, var(--magenta) 40%, transparent));
+  transform: scale(1.18);
+}
+.gashapon-tray-item:focus-visible{
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Custom tooltip: reveals the owned capsule's name on hover/focus without
+   reopening the reveal modal. The chip's `aria-label` already carries the
+   accessible name at all times — this bubble is a purely visual affordance
+   for sighted users, so it stays `aria-hidden`. */
+.gashapon-tray-tooltip{
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translate(-50%, 4px);
+  white-space: nowrap;
+  font-family: var(--font-arcade);
+  font-size: 10px;
+  letter-spacing: .04em;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 40%, transparent);
+  background: color-mix(in srgb, var(--bg0) 92%, transparent);
+  color: color-mix(in srgb, var(--cyan) 92%, var(--ink));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 30%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease;
+  z-index: 5;
+}
+.gashapon-tray-item:hover .gashapon-tray-tooltip,
+.gashapon-tray-item:focus-visible .gashapon-tray-tooltip{
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Collection-complete state: once all 32 catalog ids are owned, the tray
+   gets a distinct gold/rainbow neon treatment + a "FULL SET" badge, mirroring
+   the completion framing terminal quests get moving from TODO.md to DONE.md. */
+.gashapon-tray--complete{
+  border-color: color-mix(in srgb, var(--magenta) 50%, transparent);
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.40),
+    0 0 18px color-mix(in srgb, var(--magenta) 35%, transparent),
+    0 0 30px color-mix(in srgb, var(--cyan) 22%, transparent);
+  animation: gashaponTrayCompleteGlow 2.6s ease-in-out infinite;
+}
+.gashapon-tray--complete .gashapon-tray-item{
+  color: color-mix(in srgb, var(--magenta) 65%, var(--cyan));
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--magenta) 42%, transparent));
+}
+.gashapon-tray-complete-badge{
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-arcade);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--magenta) 55%, transparent);
+  color: color-mix(in srgb, var(--magenta) 92%, var(--ink));
+  text-shadow: 0 0 8px color-mix(in srgb, var(--magenta) 60%, transparent);
+  white-space: nowrap;
+}
+@keyframes gashaponTrayCompleteGlow{
+  0%, 100%{
+    box-shadow:
+      0 8px 22px rgba(0,0,0,.40),
+      0 0 18px color-mix(in srgb, var(--magenta) 35%, transparent),
+      0 0 30px color-mix(in srgb, var(--cyan) 22%, transparent);
+  }
+  50%{
+    box-shadow:
+      0 8px 22px rgba(0,0,0,.40),
+      0 0 26px color-mix(in srgb, var(--magenta) 55%, transparent),
+      0 0 42px color-mix(in srgb, var(--cyan) 38%, transparent);
+  }
 }
 
 /* Discreet, unadvertised trigger — real, focusable <button>, just low-key. */

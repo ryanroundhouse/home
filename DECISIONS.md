@@ -294,6 +294,20 @@
   - The gashapon feature (spawn/draw/persistence/catalog/reveal) is now content-complete end-to-end; no further follow-up issue is implied by ADR-0017/0018.
   - Future capsule-reveal tweaks (timing, added phases, art framing) only need to touch `lib/gashaponModal.js` + the `.gashapon-cinema*`/`.gashapon-machine*`/`.gashapon-capsule*`/`.gashapon-reveal-*` block in `styles.css` — the spawn/draw/storage contracts remain untouched.
 
+### ADR-0020 — Neon footer capsule tray polish + collection-complete state
+- **Status**: Accepted
+- **Date**: 2026-07-13
+- **Context**: ADR-0017 shipped the footer capsule tray as a plain row of icons (`title="…"` for the name, no keyboard affordance, no notion of the set being finished). This issue polishes that tray now that the full 32-piece catalog (ADR-0018) makes "owning everything" a real, reachable milestone.
+- **Decision**:
+  - New pure module `lib/gashaponTray.js` owns the two bits of tray logic worth unit-testing without a DOM: `isGashaponCollectionComplete(ownedIds, catalogIds)` (true once every catalog id is owned, order/duplicates/extra ids irrelevant) and `getGashaponTrayLabel(ownedCount, totalCount)` (formats the tray's `aria-label`, e.g. `"Capsule collection: 5 of 32 owned"` vs. `"Capsule collection complete — all 32 capsules owned"`). Covered by `tests/gashaponTray.test.js`, including against the real `GASHAPON_CATALOG_IDS` export from `lib/gashaponData.js`.
+  - `script.js`'s `renderTray()` now renders each owned chip as a real focusable element (`tabindex="0"`, `role="img"`, `aria-label="<capsule name>"`) instead of a plain `<span title="…">` — the accessible name is always programmatically available (not just on hover), and a purely visual `.gashapon-tray-tooltip` bubble (marked `aria-hidden`) surfaces the name on `:hover`/`:focus-visible` so sighted users don't need to reopen the reveal modal to identify a capsule.
+  - The tray container itself gets `role="group"` plus a live `aria-label` from `getGashaponTrayLabel()`, and toggles a `.gashapon-tray--complete` class once `isGashaponCollectionComplete()` is true — styled in `styles.css` with a distinct gold/magenta pulsing neon glow (`gashaponTrayCompleteGlow` keyframes, respects the site's existing `prefers-reduced-motion` global override) plus an `aria-hidden` `"FULL SET"` badge chip, mirroring the completion framing terminal quests get moving from `TODO.md` to `DONE.md` — a distinct state, not just "one more icon added".
+  - All new styling reuses ADR-0012's `data-theme` CSS variables (`--cyan`, `--magenta`, `--bg0`, `--ink`, `--font-arcade`, `--focus`) via `color-mix()`, so the tray/tooltip/badge/complete-glow re-theme automatically across all 12 site themes without any per-theme overrides.
+  - `script.js` now imports `GASHAPON_CATALOG_IDS` from `lib/gashaponData.js` (already exported, previously unused by `script.js`) instead of re-deriving `gashaponCatalog.map((c) => c.id)` at claim time — a small dedupe enabled by needing the same id list in two places (render + draw) rather than a new capability.
+- **Consequences**:
+  - The footer tray is now fully keyboard-navigable with always-available accessible names, and the "own everything" milestone has a real, themeable visual payoff instead of silently looking identical to 31/32.
+  - Future catalog growth needs no changes here — `isGashaponCollectionComplete`/`getGashaponTrayLabel` are already parameterized by catalog size/ids, matching ADR-0018's precedent for `pickNextCapsule`.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.
