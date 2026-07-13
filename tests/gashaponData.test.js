@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 
 import { gashaponCatalog, GASHAPON_CATALOG_IDS, getCapsuleById } from '../lib/gashaponData.js';
 
-test('gashaponCatalog: is a small placeholder set (vertical slice, not the full 32-piece set)', () => {
+test('gashaponCatalog: is the full 32-piece hand-authored set', () => {
   assert.ok(Array.isArray(gashaponCatalog));
-  assert.ok(gashaponCatalog.length >= 3 && gashaponCatalog.length <= 8);
+  assert.equal(gashaponCatalog.length, 32);
 });
 
 test('gashaponCatalog: every entry has id/name/svg and unique ids', () => {
@@ -31,4 +31,25 @@ test('getCapsuleById: resolves known ids and returns null for unknown ids', () =
   assert.equal(getCapsuleById(firstId), gashaponCatalog[0]);
   assert.equal(getCapsuleById('not-a-real-id'), null);
   assert.equal(getCapsuleById(), null);
+});
+
+test('gashaponCatalog: no two entries share identical SVG markup or name (no accidental duplicates)', () => {
+  const svgSeen = new Set();
+  const nameSeen = new Set();
+  for (const entry of gashaponCatalog) {
+    assert.ok(!svgSeen.has(entry.svg), `duplicate SVG markup detected for "${entry.name}" (${entry.id})`);
+    assert.ok(!nameSeen.has(entry.name), `duplicate capsule name detected: "${entry.name}"`);
+    svgSeen.add(entry.svg);
+    nameSeen.add(entry.name);
+  }
+});
+
+test('gashaponCatalog: every entry uses currentColor (theme-recolorable, no hardcoded colors)', () => {
+  const hexColorRe = /#[0-9a-fA-F]{3,8}\b/;
+  const namedColorRe = /\b(fill|stroke)="(?!none|currentColor)[a-zA-Z]+"/;
+  for (const entry of gashaponCatalog) {
+    assert.ok(entry.svg.includes('currentColor'), `expected "${entry.name}" to use currentColor`);
+    assert.ok(!hexColorRe.test(entry.svg), `expected "${entry.name}" to avoid hardcoded hex colors`);
+    assert.ok(!namedColorRe.test(entry.svg), `expected "${entry.name}" to avoid hardcoded named colors`);
+  }
 });

@@ -251,7 +251,7 @@
 ### ADR-0017 — Hidden daily gashapon machine + footer capsule collection
 - **Status**: Accepted
 - **Date**: 2026-07-13
-- **Context**: Add a hidden, cyberpunk-styled capsule-toy ("gashapon") machine that grants one capsule per local day, discoverable by finding it on whichever page it deterministically appears on that day. This issue implements the core pipeline as a thin vertical slice with a small (4-entry) placeholder catalog to prove the mechanism; the full hand-authored art set is a follow-up issue.
+- **Context**: Add a hidden, cyberpunk-styled capsule-toy ("gashapon") machine that grants one capsule per local day, discoverable by finding it on whichever page it deterministically appears on that day. This issue implements the core pipeline as a thin vertical slice with a small (4-entry) placeholder catalog to prove the mechanism; the full hand-authored art set is a follow-up issue (see ADR-0018).
 - **Decision**:
   - Inject all gashapon UI at runtime from `script.js` (new `initGashapon()`, same "no per-page HTML edits" pattern as the existing `toast()` helper) — wired into the existing `DOMContentLoaded` boot list.
   - Maintain an explicit curated allowlist of eligible pages in `lib/gashaponPages.js` (`GASHAPON_ELIGIBLE_PAGES`), mirroring the shape of `setActiveNav()`'s page `map` but covering every page that loads `script.js`, explicitly excluding `projects/*/privacy-policy.html` legal/compliance subpages (defense-in-depth: `initGashapon()` also independently checks `isPrivacyPolicyPage()` before rendering the trigger).
@@ -266,6 +266,19 @@
   - First hidden mechanic that lives in page chrome (`script.js`) rather than as a `terminal.js` subsystem — module boundary is new but consistent with `toast()`'s existing runtime-injection style.
   - Both spawn location and capsule draw are pure/seeded functions, fully covered by `node:test` without needing a browser or live-randomness mocking.
   - The catalog, art, and modal are intentionally minimal placeholders in this slice; expanding to the full 32-piece set + cinematic reveal is scoped to a follow-up issue and should extend `lib/gashaponData.js`/`lib/gashaponModal.js` without changing the spawn/draw/persistence contracts above.
+
+### ADR-0018 — Full 32-piece cyberpunk capsule SVG catalog
+- **Status**: Accepted
+- **Date**: 2026-07-13
+- **Context**: ADR-0017 shipped the gashapon spawn/draw/persistence pipeline against a small 4-entry placeholder catalog to prove the mechanism. This follow-up replaces that placeholder with the full, hand-authored 32-piece cyberpunk capsule set the pipeline was designed for.
+- **Decision**:
+  - `lib/gashaponData.js` now contains exactly 32 hand-authored entries (`{ id, name, svg }`) spanning eight cyberpunk motif groups (weapons, corp logos/insignia, cybernetic creatures, glitch glyphs, tech/hardware, body augments, network/data, misc icons) — chosen for silhouette variety so no two entries read as near-duplicates.
+  - Every entry's inline SVG uses `currentColor` exclusively for strokes/fills (no hardcoded hex/named colors), so CSS can theme-recolor and glow/animate the artwork per ADR-0012's 12 site themes without touching the SVG bodies again; `tests/gashaponData.test.js` enforces this with a static assertion.
+  - `pickNextCapsule`'s no-repeat bag contract (ADR-0017) is unchanged — it already took `catalogIds` as a parameter defaulting to `GASHAPON_CATALOG_IDS`, so growing the catalog from 4 to 32 entries required no changes to `lib/gashaponDraw.js` itself, only new test coverage (`tests/gashaponDraw.test.js`) asserting all 32 real catalog ids are drawn before any repeat, then a seeded reshuffle allows repeats.
+  - The 4-entry placeholder set is removed entirely; no page/script/storage changes were needed since `script.js`'s `initGashapon()` and the footer tray already render generically off however many entries `gashaponCatalog` contains.
+- **Consequences**:
+  - The gashapon feature is now content-complete for its first full cycle (32 distinct days before any capsule repeats); no further catalog work is required for the base mechanic.
+  - Growing/replacing individual pieces going forward only requires editing `lib/gashaponData.js` (add/replace an entry with a unique id and distinct SVG) — no other module needs to change.
 
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
