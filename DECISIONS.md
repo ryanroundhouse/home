@@ -248,6 +248,25 @@
   - About stays a simple bio page; the curated project grid remains the sole responsibility of `projects.html`.
   - Adding/renaming a featured project means updating both `about.html` and `projects.html` by hand (acceptable at this scale).
 
+### ADR-0017 — Hidden daily gashapon machine + footer capsule collection
+- **Status**: Accepted
+- **Date**: 2026-07-13
+- **Context**: Add a hidden, cyberpunk-styled capsule-toy ("gashapon") machine that grants one capsule per local day, discoverable by finding it on whichever page it deterministically appears on that day. This issue implements the core pipeline as a thin vertical slice with a small (4-entry) placeholder catalog to prove the mechanism; the full hand-authored art set is a follow-up issue.
+- **Decision**:
+  - Inject all gashapon UI at runtime from `script.js` (new `initGashapon()`, same "no per-page HTML edits" pattern as the existing `toast()` helper) — wired into the existing `DOMContentLoaded` boot list.
+  - Maintain an explicit curated allowlist of eligible pages in `lib/gashaponPages.js` (`GASHAPON_ELIGIBLE_PAGES`), mirroring the shape of `setActiveNav()`'s page `map` but covering every page that loads `script.js`, explicitly excluding `projects/*/privacy-policy.html` legal/compliance subpages (defense-in-depth: `initGashapon()` also independently checks `isPrivacyPolicyPage()` before rendering the trigger).
+  - `lib/gashaponSpawn.js`: pure, seeded `pickDailySpawn(dateStr, eligiblePages)` deterministically picks exactly one page per local calendar day (seeded hash of `dateStr`, no `Math.random()` — see `lib/gashaponRng.js`).
+  - `lib/gashaponDraw.js`: pure `pickNextCapsule(dateStr, ownedIds, catalogIds?)` implements a no-repeat bag — within one pass ("cycle") through the catalog every id is drawn exactly once (seeded shuffle keyed by `dateStr` + cycle number); once a full cycle completes, the next cycle reshuffles and duplicates become possible.
+  - `lib/gashaponData.js`: catalog module (`{ id, name, svg }[]`), matching the existing `terminalMailData.js`/`terminalBbsData.js` "data lives in lib/" convention. Seeded with 4 placeholder inline SVGs (`currentColor` strokes/fills for CSS theme-recolor) for this slice; the full 32-piece set ships in a follow-up issue.
+  - Persistence: `lib/gashaponStorage.js` owns a new versioned localStorage key `rg_gashapon_v1` (`{ version, ownedIds, lastClaimedDate }`), granting at most one capsule per local calendar day. **Deliberately excluded** from the `rm -rf /` wipe list in `terminal.js` (with an inline comment pointing back here) — same posture as ADR-0014's chat network-dependency carve-out — since the capsule collection is slow, real-calendar meta-progression distinct from the terminal's resettable adventure/save-state. A regression test (`tests/gashaponResetExclusion.test.js`) statically asserts the storage key never appears in `terminal.js`'s source, mirroring the existing filesystem "seat-belt" test pattern, since `terminal.js` cannot be `import`-ed under `node:test` (it touches `window`/`document` at import time).
+  - UI: the trigger is a real, keyboard-focusable `<button>` with `aria-label="unidentified device"`, styled small/dim (opacity ramps up on hover/focus) but never `display:none`/`aria-hidden` — accessible and tab-reachable, just unadvertised. It lives in a runtime-created `#gashaponFooter` slot alongside the persistent capsule tray (`.gashapon-tray`), which renders nothing until the first capsule is claimed, then grows one icon at a time.
+  - Claiming a capsule opens `lib/gashaponModal.js`'s `openGashaponCapsuleModal()` — a blocking modal dialog (`role="dialog"`, `aria-modal`) showing the capsule name + inline SVG, matching the existing modal-cinematic precedent set by `memoryInjectionGame.js`/`timingBarGame.js`/`pipesGame.js` rather than a bare `toast()`. This is an explicit stub for the full cinematic crank/drop/crack-open reveal, deferred to a follow-up issue.
+- **Consequences**:
+  - First feature whose persisted state is intentionally NOT reset by `rm -rf /` — flagged in both `terminal.js` (inline comment) and this ADR for future agents.
+  - First hidden mechanic that lives in page chrome (`script.js`) rather than as a `terminal.js` subsystem — module boundary is new but consistent with `toast()`'s existing runtime-injection style.
+  - Both spawn location and capsule draw are pure/seeded functions, fully covered by `node:test` without needing a browser or live-randomness mocking.
+  - The catalog, art, and modal are intentionally minimal placeholders in this slice; expanding to the full 32-piece set + cinematic reveal is scoped to a follow-up issue and should extend `lib/gashaponData.js`/`lib/gashaponModal.js` without changing the spawn/draw/persistence contracts above.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

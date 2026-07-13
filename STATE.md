@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-07-08
+- **Last updated**: 2026-07-13
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -34,6 +34,12 @@
   - `package.json` (Node test scripts; ESM)
 - **`lib/`**: shared ESM modules (pure functions; used by browser + Node tests)
 - **`tests/`**: Node test files (run via `node --test`)
+
+## Hidden gashapon machine (vertical slice)
+- **Spawn**: `lib/gashaponSpawn.js`'s `pickDailySpawn(dateStr, eligiblePages)` deterministically (seeded, no `Math.random()`) picks one page from `lib/gashaponPages.js`'s `GASHAPON_ELIGIBLE_PAGES` allowlist per local calendar day; `projects/*/privacy-policy.html` pages are excluded from the allowlist (and independently re-checked at render time).
+- **Draw**: `lib/gashaponDraw.js`'s `pickNextCapsule(dateStr, ownedIds)` is a seeded no-repeat bag draw over `lib/gashaponData.js`'s placeholder catalog (currently 4 entries; full 32-piece art set is a follow-up issue); once a full cycle is owned, the next cycle reshuffles and duplicates become possible.
+- **Persistence**: `lib/gashaponStorage.js` stores owned ids + last-claimed date in localStorage `rg_gashapon_v1` (versioned), capped at one claim per local day. This key is **deliberately excluded** from `terminal.js`'s `rm -rf /` wipe list (see DECISIONS.md ADR-0017) — a regression test (`tests/gashaponResetExclusion.test.js`) enforces this.
+- **UI**: `script.js`'s `initGashapon()` (in the `DOMContentLoaded` boot list) injects a discreet `<button aria-label="unidentified device">` into a runtime-created footer slot only on today's spawn page, plus a footer capsule tray (hidden until first claim). Clicking the button draws + persists a capsule and opens `lib/gashaponModal.js`'s modal dialog (stub for a future cinematic reveal) — not a toast.
 
 ## Tooling & constraints
 - **No frontend frameworks**
@@ -84,6 +90,13 @@
 ├── lib/
 │   ├── donationLinks.js
 │   ├── slugify.js
+│   ├── gashaponRng.js
+│   ├── gashaponPages.js
+│   ├── gashaponSpawn.js
+│   ├── gashaponDraw.js
+│   ├── gashaponData.js
+│   ├── gashaponStorage.js
+│   ├── gashaponModal.js
 │   ├── memoryInjectionDiff.js
 │   ├── memoryInjectionGame.js
 │   ├── pipesGame.js
@@ -123,6 +136,13 @@
 └── tests/
     ├── donationLinks.test.js
     ├── slugify.test.js
+    ├── gashaponRng.test.js
+    ├── gashaponPages.test.js
+    ├── gashaponSpawn.test.js
+    ├── gashaponDraw.test.js
+    ├── gashaponData.test.js
+    ├── gashaponStorage.test.js
+    ├── gashaponResetExclusion.test.js
     ├── memoryInjectionDiff.test.js
     ├── terminalThemes.test.js
     ├── terminalMail.test.js

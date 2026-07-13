@@ -1495,6 +1495,136 @@ textarea{ min-height: 140px; resize: vertical; }
   transform: translateX(-50%) translateY(-4px);
 }
 
+/* ---------- Gashapon (hidden daily capsule machine) ---------- */
+/* Runtime-injected by script.js's initGashapon() — no per-page markup. */
+.gashapon-footer{
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 70; /* below term-fab (80) so it never overlaps the terminal button */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.gashapon-footer > *{
+  pointer-events: auto;
+}
+
+.gashapon-tray{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 20%, transparent);
+  background: color-mix(in srgb, var(--bg0) 70%, transparent);
+  box-shadow: 0 8px 22px rgba(0,0,0,.40);
+}
+.gashapon-tray[hidden]{ display: none; }
+.gashapon-tray-item{
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  color: color-mix(in srgb, var(--cyan) 82%, var(--ink));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 30%, transparent));
+}
+.gashapon-tray-item svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Discreet, unadvertised trigger — real, focusable <button>, just low-key. */
+.gashapon-trigger{
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--magenta) 30%, transparent);
+  background: color-mix(in srgb, var(--bg0) 60%, transparent);
+  opacity: .35;
+  cursor: pointer;
+  transition: opacity .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.gashapon-trigger:hover,
+.gashapon-trigger:focus-visible{
+  opacity: .9;
+  transform: scale(1.15);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--magenta) 30%, transparent);
+}
+.gashapon-trigger:disabled{
+  opacity: .18;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.gashapon-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 130; /* above toast (120), below decrypt (140) */
+  background: rgba(0,0,0,.68);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.gashapon-dialog{
+  width: min(420px, 100%);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
+  background: color-mix(in srgb, var(--bg0) 90%, transparent);
+  box-shadow:
+    0 26px 80px rgba(0,0,0,.80),
+    0 0 0 1px color-mix(in srgb, var(--magenta) 16%, transparent),
+    0 0 36px color-mix(in srgb, var(--cyan) 12%, transparent);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.gashapon-dialog-title{
+  font-family: var(--font-arcade);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 22%, transparent);
+}
+.gashapon-dialog-art{
+  width: 96px;
+  height: 96px;
+  color: color-mix(in srgb, var(--cyan) 86%, var(--ink));
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--magenta) 26%, transparent));
+}
+.gashapon-dialog-art svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.gashapon-dialog-name{
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
+}
+.gashapon-dialog-close{
+  border: 1px solid color-mix(in srgb, var(--magenta) 30%, transparent);
+  background: color-mix(in srgb, var(--magenta) 10%, transparent);
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
+  border-radius: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: var(--font-arcade);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.gashapon-dialog-close:hover{
+  box-shadow: 0 0 18px color-mix(in srgb, var(--magenta) 18%, transparent);
+}
+
 /* ---------- Decrypt timing-bar modal ---------- */
 .decrypt-overlay{
   position: fixed;
