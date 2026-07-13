@@ -11,7 +11,7 @@ import { DEFAULT_THEME_ID, getThemeById, TERMINAL_THEME_STORAGE_KEY } from './li
 import { GASHAPON_ELIGIBLE_PAGES, normalizeGashaponPagePath, isPrivacyPolicyPage } from './lib/gashaponPages.js';
 import { pickDailySpawn } from './lib/gashaponSpawn.js';
 import { pickNextCapsule } from './lib/gashaponDraw.js';
-import { gashaponCatalog, getCapsuleById } from './lib/gashaponData.js';
+import { getCapsuleById, GASHAPON_CATALOG_IDS } from './lib/gashaponData.js';
 import {
   loadGashaponState,
   hasClaimedToday,
@@ -19,6 +19,7 @@ import {
   getLocalDateString,
 } from './lib/gashaponStorage.js';
 import { openGashaponCapsuleModal } from './lib/gashaponModal.js';
+import { isGashaponCollectionComplete, getGashaponTrayLabel } from './lib/gashaponTray.js';
 
 (() => {
   'use strict';
@@ -301,21 +302,34 @@ ${message}
 
       const tray = document.createElement('div');
       tray.className = 'gashapon-tray';
+      tray.setAttribute('role', 'group');
       tray.hidden = true;
       footer.appendChild(tray);
 
       const renderTray = (state) => {
-        const owned = (state.ownedIds || [])
-          .map((id) => getCapsuleById(id))
-          .filter(Boolean);
+        const ownedIds = state.ownedIds || [];
+        const owned = ownedIds.map((id) => getCapsuleById(id)).filter(Boolean);
         if (owned.length === 0) {
           tray.hidden = true;
           tray.innerHTML = '';
+          tray.classList.remove('gashapon-tray--complete');
           return;
         }
+        const complete = isGashaponCollectionComplete(ownedIds, GASHAPON_CATALOG_IDS);
         tray.hidden = false;
-        tray.innerHTML = owned
-          .map((c) => `<span class="gashapon-tray-item" title="${c.name}">${c.svg}</span>`)
+        tray.classList.toggle('gashapon-tray--complete', complete);
+        tray.setAttribute('aria-label', getGashaponTrayLabel(owned.length, GASHAPON_CATALOG_IDS.length));
+        const badge = complete
+          ? '<span class="gashapon-tray-complete-badge" aria-hidden="true">FULL SET</span>'
+          : '';
+        tray.innerHTML = badge + owned
+          .map(
+            (c) =>
+              `<span class="gashapon-tray-item" tabindex="0" role="img" aria-label="${c.name}">` +
+              `${c.svg}` +
+              `<span class="gashapon-tray-tooltip" aria-hidden="true">${c.name}</span>` +
+              `</span>`
+          )
           .join('');
       };
 
@@ -341,8 +355,7 @@ ${message}
 
       btn.addEventListener('click', () => {
         if (hasClaimedToday(state, todayStr)) return;
-        const catalogIds = gashaponCatalog.map((c) => c.id);
-        const capsuleId = pickNextCapsule(todayStr, state.ownedIds, catalogIds);
+        const capsuleId = pickNextCapsule(todayStr, state.ownedIds, GASHAPON_CATALOG_IDS);
         if (!capsuleId) return;
 
         const result = claimCapsule(window.localStorage, { id: capsuleId, dateStr: todayStr });
