@@ -2,7 +2,7 @@
 - **Project**: Personal website (vanilla HTML/CSS/JS)
 - **Frontend runtime**: Plain files opened directly (no build step required)
 - **Testing**: Node **22+** using `node:test` (no extra packages)
-- **Last updated**: 2026-07-13 (full 32-piece gashapon catalog)
+- **Last updated**: 2026-07-13 (cinematic gashapon capsule-reveal animation)
 
 ## How to run
 - **Serve locally (recommended for module scripts)**: `npm run dev` then open `http://127.0.0.1:3000`
@@ -39,7 +39,8 @@
 - **Spawn**: `lib/gashaponSpawn.js`'s `pickDailySpawn(dateStr, eligiblePages)` deterministically (seeded, no `Math.random()`) picks one page from `lib/gashaponPages.js`'s `GASHAPON_ELIGIBLE_PAGES` allowlist per local calendar day; `projects/*/privacy-policy.html` pages are excluded from the allowlist (and independently re-checked at render time).
 - **Draw**: `lib/gashaponDraw.js`'s `pickNextCapsule(dateStr, ownedIds)` is a seeded no-repeat bag draw over `lib/gashaponData.js`'s full 32-piece hand-authored cyberpunk catalog (see DECISIONS.md ADR-0018); once a full cycle (all 32 ids owned) is owned, the next cycle reshuffles and duplicates become possible.
 - **Persistence**: `lib/gashaponStorage.js` stores owned ids + last-claimed date in localStorage `rg_gashapon_v1` (versioned), capped at one claim per local day. This key is **deliberately excluded** from `terminal.js`'s `rm -rf /` wipe list (see DECISIONS.md ADR-0017) — a regression test (`tests/gashaponResetExclusion.test.js`) enforces this.
-- **UI**: `script.js`'s `initGashapon()` (in the `DOMContentLoaded` boot list) injects a discreet `<button aria-label="unidentified device">` into a runtime-created footer slot only on today's spawn page, plus a footer capsule tray (hidden until first claim). Clicking the button draws + persists a capsule and opens `lib/gashaponModal.js`'s modal dialog (stub for a future cinematic reveal) — not a toast.
+- **UI**: `script.js`'s `initGashapon()` (in the `DOMContentLoaded` boot list) injects a discreet `<button aria-label="unidentified device">` into a runtime-created footer slot only on today's spawn page, plus a footer capsule tray (hidden until first claim). Clicking the button draws + persists a capsule and opens `lib/gashaponModal.js`'s modal dialog — not a toast.
+- **Cinematic reveal**: `lib/gashaponModal.js`'s `openGashaponCapsuleModal({ name, svg, onClose })` plays a blocking, auto-advancing `crank -> drop -> crack -> reveal` cinematic (driven by `dialog.dataset.phase`, styled in `styles.css`'s `.gashapon-cinema*`/`.gashapon-machine*`/`.gashapon-capsule*`/`.gashapon-reveal-*` rules + keyframes) before showing the large neon-framed capsule SVG + name. Honors `prefers-reduced-motion` by skipping straight to the `reveal` phase (no timers) instead of just relying on the CSS media query. Includes a `trapFocus` keyboard handler (same pattern as `memoryInjectionGame.js`/`pipesGame.js`), Escape-to-close, click-outside-to-close, and an `onClose` callback that `script.js` uses to return focus to the triggering `.gashapon-trigger` button (see DECISIONS.md ADR-0019).
 
 ## Tooling & constraints
 - **No frontend frameworks**

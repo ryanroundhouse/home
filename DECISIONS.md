@@ -280,6 +280,20 @@
   - The gashapon feature is now content-complete for its first full cycle (32 distinct days before any capsule repeats); no further catalog work is required for the base mechanic.
   - Growing/replacing individual pieces going forward only requires editing `lib/gashaponData.js` (add/replace an entry with a unique id and distinct SVG) — no other module needs to change.
 
+### ADR-0019 — Cinematic gashapon capsule-reveal animation
+- **Status**: Accepted
+- **Date**: 2026-07-13
+- **Context**: ADR-0017 shipped `lib/gashaponModal.js` as an explicit stub — a plain dialog showing the capsule name + SVG immediately, deferring "the full cinematic crank/drop/crack-open reveal" to a follow-up issue (#8). This issue implements that reveal.
+- **Decision**:
+  - Keep `openGashaponCapsuleModal({ name, svg, onClose })`'s existing signature/contract (no changes to `script.js`'s call site beyond adding `onClose`, and no changes to the spawn/draw/persistence pipeline) — only the modal's internal presentation changes.
+  - Drive the cinematic as an auto-advancing phase machine (`crank -> drop -> crack -> reveal`) via a single `dialog.dataset.phase` attribute plus a `setTimeout`-chain in `lib/gashaponModal.js`, with CSS (`styles.css`'s `.gashapon-cinema*`/`.gashapon-machine*`/`.gashapon-capsule*`/`.gashapon-reveal-*` rules + keyframes) keying off `[data-phase="…"]` selectors to show/animate each layer. All phase timers are tracked in one array and cleared unconditionally on close, so closing mid-animation (Escape, click-outside, or the close button) never leaves a dangling timer.
+  - Match the existing modal-cinematic precedent (`memoryInjectionGame.js`, `timingBarGame.js`, `pipesGame.js`) rather than inventing a new interaction pattern: added the same `trapFocus` Tab-cycling keyboard handler those games use, and had `script.js` pass an `onClose` that refocuses the `.gashapon-trigger` button — closing the loop on ADR-0017's dialog, which had focus-in (via the close button) but no focus-return.
+  - `prefers-reduced-motion: reduce` is honored **in JS**, not just via the site-wide reduced-motion CSS media query: `lib/gashaponModal.js` checks `matchMedia` up front and, when set, jumps straight to the `reveal` phase with zero timers scheduled, matching the existing `prefersReducedMotion` check pattern in `script.js`/`terminal.js` (e.g. the matrix easter egg). The dialog's `aria-label` (stating the capsule name) is set on the overlay at open time regardless of animation phase, so assistive tech announces the real outcome immediately rather than waiting on the sighted-user cinematic.
+  - No new `lib/` test file: this module is DOM-only (creates/removes its own `document`/`window`-dependent elements), matching the existing untested status of the other modal-cinematic files (`memoryInjectionGame.js`, `timingBarGame.js`, `pipesGame.js`) — this repo's `node:test` setup has no DOM shim, so only pure-logic modules are unit tested.
+- **Consequences**:
+  - The gashapon feature (spawn/draw/persistence/catalog/reveal) is now content-complete end-to-end; no further follow-up issue is implied by ADR-0017/0018.
+  - Future capsule-reveal tweaks (timing, added phases, art framing) only need to touch `lib/gashaponModal.js` + the `.gashapon-cinema*`/`.gashapon-machine*`/`.gashapon-capsule*`/`.gashapon-reveal-*` block in `styles.css` — the spawn/draw/storage contracts remain untouched.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.

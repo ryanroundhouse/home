@@ -1585,29 +1585,186 @@ textarea{ min-height: 140px; resize: vertical; }
   gap: 12px;
   text-align: center;
 }
-.gashapon-dialog-title{
+.gashapon-cinema-title{
   font-family: var(--font-arcade);
   letter-spacing: .08em;
   text-transform: uppercase;
   font-size: 13px;
   color: color-mix(in srgb, var(--ink) 92%, transparent);
   text-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 22%, transparent);
+  min-height: 1.4em;
 }
-.gashapon-dialog-art{
-  width: 96px;
-  height: 96px;
+
+/* Cinematic crank -> drop -> crack -> reveal sequence stage. Phase-specific
+   layers are stacked and toggled by `.gashapon-cinema[data-phase]`; the
+   global reduced-motion rule (zeroes animation/transition durations) is a
+   belt-and-suspenders backstop — `lib/gashaponModal.js` itself skips
+   straight to the `reveal` phase (no timers at all) when
+   `prefers-reduced-motion: reduce` is set. */
+.gashapon-cinema-stage{
+  position: relative;
+  width: 100%;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.gashapon-cinema-stage::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,.9), transparent 60%);
+  opacity: 0;
+}
+.gashapon-cinema[data-phase="crack"] .gashapon-cinema-stage::after{
+  animation: gashaponFlash .35s ease-out .48s both;
+}
+
+.gashapon-machine,
+.gashapon-capsule,
+.gashapon-reveal-frame{
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.gashapon-cinema[data-phase="crank"] .gashapon-machine{ opacity: 1; }
+.gashapon-cinema[data-phase="drop"] .gashapon-capsule,
+.gashapon-cinema[data-phase="crack"] .gashapon-capsule{ opacity: 1; }
+.gashapon-cinema[data-phase="reveal"] .gashapon-reveal-frame{ opacity: 1; }
+
+.gashapon-machine-svg{
+  width: 108px;
+  height: 108px;
+  color: color-mix(in srgb, var(--cyan) 86%, var(--ink));
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--magenta) 26%, transparent));
+}
+.gashapon-machine-svg rect{
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.gashapon-machine-dome{
+  fill: color-mix(in srgb, var(--cyan) 14%, transparent);
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.gashapon-machine-knob{
+  fill: currentColor;
+  opacity: .9;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.gashapon-cinema[data-phase="crank"] .gashapon-machine-knob{
+  animation: gashaponKnobTurn .5s linear infinite;
+}
+.gashapon-cinema[data-phase="crank"] .gashapon-machine-dome{
+  animation: gashaponDomePulse 1s ease-in-out infinite;
+}
+
+.gashapon-capsule{
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 26%, transparent);
+  transform: translateY(-120px);
+}
+.gashapon-cinema[data-phase="drop"] .gashapon-capsule{
+  animation: gashaponDrop .55s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.gashapon-cinema[data-phase="crack"] .gashapon-capsule{
+  transform: translateY(0);
+  animation: gashaponShake .35s ease-in-out;
+}
+.gashapon-capsule-half{
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  transform-box: fill-box;
+}
+.gashapon-capsule-top{
+  top: 0;
+  border-radius: 28px 28px 0 0;
+  background: color-mix(in srgb, var(--magenta) 55%, var(--bg0));
+}
+.gashapon-capsule-bottom{
+  bottom: 0;
+  border-radius: 0 0 28px 28px;
+  background: color-mix(in srgb, var(--cyan) 55%, var(--bg0));
+}
+.gashapon-cinema[data-phase="crack"] .gashapon-capsule-top{
+  animation: gashaponCrackTop .3s ease-in .32s forwards;
+}
+.gashapon-cinema[data-phase="crack"] .gashapon-capsule-bottom{
+  animation: gashaponCrackBottom .3s ease-in .32s forwards;
+}
+
+.gashapon-reveal-frame{
+  width: 152px;
+  height: 152px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--bg0) 70%, transparent), color-mix(in srgb, var(--bg0) 94%, transparent));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cyan) 45%, transparent),
+    0 0 32px color-mix(in srgb, var(--magenta) 40%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--cyan) 22%, transparent);
+}
+.gashapon-reveal-frame::before{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  z-index: -1;
+  opacity: .55;
+  filter: blur(2px);
+  background: conic-gradient(from 0deg, var(--cyan), var(--magenta), var(--cyan));
+  animation: gashaponRingSpin 6s linear infinite;
+}
+.gashapon-cinema[data-phase="reveal"] .gashapon-reveal-frame{
+  animation: gashaponRevealPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+.gashapon-reveal-art{
+  width: 100px;
+  height: 100px;
   color: color-mix(in srgb, var(--cyan) 86%, var(--ink));
   filter: drop-shadow(0 0 16px color-mix(in srgb, var(--magenta) 26%, transparent));
 }
-.gashapon-dialog-art svg{
+.gashapon-reveal-art svg{
   width: 100%;
   height: 100%;
   display: block;
 }
+
+.gashapon-cinema-feed{
+  display: none;
+  width: 100%;
+  min-height: 3.4em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  color: color-mix(in srgb, var(--cyan) 78%, var(--ink));
+  text-shadow: 0 0 10px color-mix(in srgb, var(--cyan) 18%, transparent);
+}
+.gashapon-cinema[data-phase="crank"] .gashapon-cinema-feed{ display: block; }
+.gashapon-cinema-feed > div{ margin: 0 0 4px; opacity: .92; }
+
 .gashapon-dialog-name{
   font-family: var(--font-mono);
   font-size: 14px;
   color: color-mix(in srgb, var(--ink) 92%, transparent);
+  opacity: 0;
+  transform: translateY(6px);
+}
+.gashapon-cinema[data-phase="reveal"] .gashapon-dialog-name{
+  animation: gashaponNameIn .3s ease-out .08s both;
 }
 .gashapon-dialog-close{
   border: 1px solid color-mix(in srgb, var(--magenta) 30%, transparent);
@@ -1623,6 +1780,51 @@ textarea{ min-height: 140px; resize: vertical; }
 }
 .gashapon-dialog-close:hover{
   box-shadow: 0 0 18px color-mix(in srgb, var(--magenta) 18%, transparent);
+}
+
+@keyframes gashaponKnobTurn{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+@keyframes gashaponDomePulse{
+  0%, 100%{ opacity: .7; }
+  50%{ opacity: 1; }
+}
+@keyframes gashaponDrop{
+  0%{ transform: translateY(-120px); }
+  70%{ transform: translateY(6px); }
+  85%{ transform: translateY(-8px); }
+  100%{ transform: translateY(0); }
+}
+@keyframes gashaponShake{
+  0%, 100%{ transform: translateX(0) rotate(0); }
+  20%{ transform: translateX(-4px) rotate(-4deg); }
+  40%{ transform: translateX(4px) rotate(4deg); }
+  60%{ transform: translateX(-3px) rotate(-3deg); }
+  80%{ transform: translateX(3px) rotate(3deg); }
+}
+@keyframes gashaponCrackTop{
+  to{ transform: translateY(-36px) rotate(-24deg); opacity: 0; }
+}
+@keyframes gashaponCrackBottom{
+  to{ transform: translateY(36px) rotate(24deg); opacity: 0; }
+}
+@keyframes gashaponFlash{
+  0%{ opacity: 0; }
+  40%{ opacity: .85; }
+  100%{ opacity: 0; }
+}
+@keyframes gashaponRevealPop{
+  0%{ transform: scale(.4); opacity: 0; }
+  60%{ transform: scale(1.08); opacity: 1; }
+  100%{ transform: scale(1); opacity: 1; }
+}
+@keyframes gashaponRingSpin{
+  to{ transform: rotate(360deg); }
+}
+@keyframes gashaponNameIn{
+  from{ opacity: 0; transform: translateY(6px); }
+  to{ opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Decrypt timing-bar modal ---------- */
