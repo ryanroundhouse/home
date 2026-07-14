@@ -288,7 +288,15 @@ ${message}
    * ---------------------------*/
   const initGashapon = () => {
     try {
-      const todayStr = getLocalDateString(new Date());
+      // Dev-only date override (?gashaponDay=YYYY-MM-DD) so the daily spawn can
+      // be previewed locally. Ignored on any non-localhost host.
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      const overrideDay = isLocalhost
+        ? new URLSearchParams(window.location.search).get('gashaponDay')
+        : null;
+      const todayStr = /^\d{4}-\d{2}-\d{2}$/.test(overrideDay || '')
+        ? overrideDay
+        : getLocalDateString(new Date());
       const currentPage = normalizeGashaponPagePath(window.location.pathname);
       const spawnPage = pickDailySpawn(todayStr, GASHAPON_ELIGIBLE_PAGES);
 
@@ -325,13 +333,34 @@ ${message}
         tray.innerHTML = badge + owned
           .map(
             (c) =>
-              `<span class="gashapon-tray-item" tabindex="0" role="img" aria-label="${c.name}">` +
+              `<button type="button" class="gashapon-tray-item" data-capsule-id="${c.id}" aria-label="View ${c.name}">` +
               `${c.svg}` +
               `<span class="gashapon-tray-tooltip" aria-hidden="true">${c.name}</span>` +
-              `</span>`
+              `</button>`
           )
           .join('');
       };
+
+      // Clicking (or Enter/Space on) an owned capsule re-opens the close-up
+      // reveal for that prize — jumping straight to the final frame.
+      tray.addEventListener('click', (e) => {
+        const item = e.target.closest?.('.gashapon-tray-item');
+        if (!item || !tray.contains(item)) return;
+        const capsule = getCapsuleById(item.dataset.capsuleId);
+        if (!capsule) return;
+        openGashaponCapsuleModal({
+          name: capsule.name,
+          svg: capsule.svg,
+          immediate: true,
+          onClose: () => {
+            try {
+              item.focus();
+            } catch {
+              // no-op
+            }
+          },
+        });
+      });
 
       let state = loadGashaponState(window.localStorage);
       renderTray(state);

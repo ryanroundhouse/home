@@ -1503,6 +1503,9 @@ textarea{ min-height: 140px; resize: vertical; }
   bottom: 14px;
   z-index: 70; /* below term-fab (80) so it never overlaps the terminal button */
   display: flex;
+  /* Column: the machine (last child) stays pinned in the bottom-left corner
+     while the tray sits above it and grows upward as the collection fills. */
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   pointer-events: none;
@@ -1513,25 +1516,42 @@ textarea{ min-height: 140px; resize: vertical; }
 
 .gashapon-tray{
   display: flex;
+  /* Vertical stack: oldest at top, newest nearest the machine at the bottom. */
+  flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 8px 6px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--cyan) 20%, transparent);
   background: color-mix(in srgb, var(--bg0) 70%, transparent);
   box-shadow: 0 8px 22px rgba(0,0,0,.40);
   transition: border-color .2s ease, box-shadow .2s ease;
+  /* Never run off the top of the screen / under the nav once the collection
+     gets large — cap the height and let the stack scroll within itself.
+     `dvh` tracks the *visible* viewport as mobile browser chrome shows/hides. */
+  max-height: calc(100vh - 120px);
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* hidden but still scrollable */
 }
+.gashapon-tray::-webkit-scrollbar{ width: 0; height: 0; }
 .gashapon-tray[hidden]{ display: none; }
 .gashapon-tray-item{
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   border-radius: 50%;
   color: color-mix(in srgb, var(--cyan) 82%, var(--ink));
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 30%, transparent));
-  cursor: default;
+  cursor: pointer;
   transition: color .16s ease, filter .16s ease, transform .16s ease;
 }
 .gashapon-tray-item svg{
@@ -1558,9 +1578,10 @@ textarea{ min-height: 140px; resize: vertical; }
    for sighted users, so it stays `aria-hidden`. */
 .gashapon-tray-tooltip{
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 9px);
-  transform: translate(-50%, 4px);
+  left: calc(100% + 9px);
+  top: 50%;
+  bottom: auto;
+  transform: translate(-4px, -50%);
   white-space: nowrap;
   font-family: var(--font-arcade);
   font-size: 10px;
@@ -1579,7 +1600,7 @@ textarea{ min-height: 140px; resize: vertical; }
 .gashapon-tray-item:hover .gashapon-tray-tooltip,
 .gashapon-tray-item:focus-visible .gashapon-tray-tooltip{
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(0, -50%);
 }
 
 /* Collection-complete state: once all 32 catalog ids are owned, the tray
@@ -1627,28 +1648,76 @@ textarea{ min-height: 140px; resize: vertical; }
 }
 
 /* Discreet, unadvertised trigger — real, focusable <button>, just low-key. */
+@keyframes gashaponPulse{
+  0%, 100%{
+    opacity: .6;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--magenta) 45%, transparent);
+  }
+  50%{
+    opacity: .95;
+    box-shadow: 0 0 12px 3px color-mix(in srgb, var(--magenta) 35%, transparent);
+  }
+}
 .gashapon-trigger{
   width: 14px;
   height: 14px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--magenta) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--magenta) 55%, transparent);
   background: color-mix(in srgb, var(--bg0) 60%, transparent);
-  opacity: .35;
+  opacity: .6;
   cursor: pointer;
   transition: opacity .16s ease, box-shadow .16s ease, transform .16s ease;
+  animation: gashaponPulse 2.4s ease-in-out infinite;
 }
 .gashapon-trigger:hover,
 .gashapon-trigger:focus-visible{
-  opacity: .9;
+  opacity: 1;
   transform: scale(1.15);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--magenta) 30%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--magenta) 45%, transparent);
+  animation-play-state: paused;
 }
 .gashapon-trigger:disabled{
   opacity: .18;
   cursor: default;
   transform: none;
   box-shadow: none;
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce){
+  .gashapon-trigger{ animation: none; opacity: .7; }
+}
+
+/* Touch devices: enlarge everything to comfortable tap targets, respect the
+   safe-area (notches / rounded corners / home indicator), and drop the
+   hover-only tooltip — a tap now opens the full close-up reveal instead. */
+@media (pointer: coarse){
+  .gashapon-footer{
+    left: max(14px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+  .gashapon-trigger{
+    position: relative;
+    width: 20px;
+    height: 20px;
+    opacity: .8;
+  }
+  /* Invisible ~44px hit area around the small visible dot. */
+  .gashapon-trigger::after{
+    content: "";
+    position: absolute;
+    inset: -12px;
+  }
+  .gashapon-tray{
+    gap: 9px;
+    padding: 9px 7px;
+  }
+  .gashapon-tray-item{
+    width: 32px;
+    height: 32px;
+  }
+  .gashapon-tray-tooltip{ display: none; }
 }
 
 .gashapon-overlay{
@@ -1662,6 +1731,8 @@ textarea{ min-height: 140px; resize: vertical; }
 }
 .gashapon-dialog{
   width: min(420px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
   background: color-mix(in srgb, var(--bg0) 90%, transparent);
@@ -1723,7 +1794,7 @@ textarea{ min-height: 140px; resize: vertical; }
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity .12s ease;
+  transition: opacity .24s ease;
 }
 .gashapon-cinema[data-phase="crank"] .gashapon-machine{ opacity: 1; }
 .gashapon-cinema[data-phase="drop"] .gashapon-capsule,
@@ -1753,10 +1824,10 @@ textarea{ min-height: 140px; resize: vertical; }
   transform-origin: center;
 }
 .gashapon-cinema[data-phase="crank"] .gashapon-machine-knob{
-  animation: gashaponKnobTurn .5s linear infinite;
+  animation: gashaponKnobTurn 1s linear infinite;
 }
 .gashapon-cinema[data-phase="crank"] .gashapon-machine-dome{
-  animation: gashaponDomePulse 1s ease-in-out infinite;
+  animation: gashaponDomePulse 2s ease-in-out infinite;
 }
 
 .gashapon-capsule{
@@ -1767,11 +1838,11 @@ textarea{ min-height: 140px; resize: vertical; }
   transform: translateY(-120px);
 }
 .gashapon-cinema[data-phase="drop"] .gashapon-capsule{
-  animation: gashaponDrop .55s cubic-bezier(.34,1.56,.64,1) forwards;
+  animation: gashaponDrop 1.1s cubic-bezier(.34,1.56,.64,1) forwards;
 }
 .gashapon-cinema[data-phase="crack"] .gashapon-capsule{
   transform: translateY(0);
-  animation: gashaponShake .35s ease-in-out;
+  animation: gashaponShake .7s ease-in-out;
 }
 .gashapon-capsule-half{
   position: absolute;
@@ -1791,10 +1862,10 @@ textarea{ min-height: 140px; resize: vertical; }
   background: color-mix(in srgb, var(--cyan) 55%, var(--bg0));
 }
 .gashapon-cinema[data-phase="crack"] .gashapon-capsule-top{
-  animation: gashaponCrackTop .3s ease-in .32s forwards;
+  animation: gashaponCrackTop .6s ease-in .64s forwards;
 }
 .gashapon-cinema[data-phase="crack"] .gashapon-capsule-bottom{
-  animation: gashaponCrackBottom .3s ease-in .32s forwards;
+  animation: gashaponCrackBottom .6s ease-in .64s forwards;
 }
 
 .gashapon-reveal-frame{
@@ -1819,7 +1890,7 @@ textarea{ min-height: 140px; resize: vertical; }
   animation: gashaponRingSpin 6s linear infinite;
 }
 .gashapon-cinema[data-phase="reveal"] .gashapon-reveal-frame{
-  animation: gashaponRevealPop .4s cubic-bezier(.34,1.56,.64,1);
+  animation: gashaponRevealPop .8s cubic-bezier(.34,1.56,.64,1);
 }
 .gashapon-reveal-art{
   width: 100px;
