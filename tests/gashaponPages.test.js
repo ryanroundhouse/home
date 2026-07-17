@@ -36,3 +36,15 @@ test('normalizeGashaponPagePath: normalizes root/index and strips query/hash', (
     'projects/zozo/index.html'
   );
 });
+
+test('normalizeGashaponPagePath: reconciles clean URLs (Cloudflare Pages) with file-based allowlist', () => {
+  assert.equal(normalizeGashaponPagePath('/contact'), 'contact.html');
+  assert.equal(normalizeGashaponPagePath('/about'), 'about.html');
+  assert.equal(normalizeGashaponPagePath('/projects'), 'projects.html');
+  assert.equal(normalizeGashaponPagePath('/projects/zozo'), 'projects/zozo/index.html');
+  assert.equal(normalizeGashaponPagePath('/projects/zozo/'), 'projects/zozo/index.html');
+  assert.equal(
+    normalizeGashaponPagePath('/projects/zozo?foo=bar#baz'),
+    'projects/zozo/index.html'
+  );
+});
