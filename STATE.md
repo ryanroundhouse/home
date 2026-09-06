@@ -21,7 +21,7 @@
   - `projects/turfwars/index.html` (project landing page)
   - `projects/turfwars/privacy-policy.html` (app privacy policy page)
 - **Chat audio assets**: `assets/sounds/chat-ping.wav` and `assets/sounds/chat-gong.wav` are bundled locally (see `assets/sounds/ATTRIBUTION.md`).
-- `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful).
+- `links.html` includes curated jump points (GitHub, LinkedIn, blog, Moodful, Zozo HQ).
 - `donate.html` is a Stripe-hosted donation landing page styled to match the site; when served locally on `localhost`, `127.0.0.1`, or `file:`, the primary CTA switches to the Stripe test payment link automatically, while production hosts keep the live link.
 - The primary site header/mobile nav now includes a `Donate` link across all top-level pages and project subpages.
 - `projects.html` now includes a Turf Wars card linking to a dedicated project page and a privacy policy subpage for app-store/privacy disclosure use.
