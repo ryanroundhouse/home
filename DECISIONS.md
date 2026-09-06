@@ -308,6 +308,17 @@
   - The footer tray is now fully keyboard-navigable with always-available accessible names, and the "own everything" milestone has a real, themeable visual payoff instead of silently looking identical to 31/32.
   - Future catalog growth needs no changes here — `isGashaponCollectionComplete`/`getGashaponTrayLabel` are already parameterized by catalog size/ids, matching ADR-0018's precedent for `pickNextCapsule`.
 
+### ADR-0021 — Links page advertises the hosted Zozo platform as "Zozo HQ" (zozohq.com), distinct from the offline Zozo project
+
+- **Status**: Accepted
+- **Date**: 2026-09-06
+- **Context**: We want to advertise the hosted agent platform at https://zozohq.com from the links page. The site already contains a 'Zozo' concept — projects/zozo/index.html, an offline TypeScript harness that drives subscription-backed coding agents — and terminal.js maps 'open zozo' to that project page.
+- **Decision**: Add a single hardcoded .link-item to links.html's .links list, labeled 'Zozo HQ' (not plain 'Zozo') to keep one meaning per name. Give it Moodful's two-line treatment (tagline + URL) since it is an advertised product, and place it directly after Moodful so the two product pitches sit above the identity links (GitHub/LinkedIn/Blog). Use target=_blank rel=noopener noreferrer like every other external anchor; this is static markup and adds no network call or analytics. Do not add a data module (ADR-0016 precedent). Terminal open/openExternal parity for zozohq.com is deliberately out of scope for this slice. Also trim the 'placeholders for now' subtitle, which no longer holds now that real product links exist.
+- **Consequences**: 
+  - The links page now clearly distinguishes between the offline Zozo project and the hosted Zozo HQ platform.
+  - Each name maps to one meaning on the site, reducing user confusion.
+  - The change follows the established pattern for hardcoded links without introducing new dependencies.
+
 ## Handoff requirements
 - Add a new ADR when making a non-trivial change in approach (tooling, structure, constraints).
 - Keep entries short; link to files/paths when relevant.
